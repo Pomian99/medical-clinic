@@ -22,3 +22,7 @@ Consider marking one of the beans as @Primary, updating the consumer to accept m
 # D2
 
 `@Primary` ustawia konkretną klasę jako główną implementację do wyboru, gdy istnieje kilka klas implementujących ten sam interfejs.
+
+# D3
+
+Po dodaniu `@Qualifier` nad polem zamiast tworzenia konstruktora ręcznie, aplikacja uruchomiła się i zbudowała się poprawnie, lecz wykorzystała `EmailReminderSender` jako implementację `ReminderSender`.
