@@ -1,3 +1,4 @@
+# D1
 ```
 ***************************
 APPLICATION FAILED TO START
@@ -17,3 +18,7 @@ Consider marking one of the beans as @Primary, updating the consumer to accept m
 ```
 
 `VisitReminderService` potrzebował beana implementującego `ReminderService`. Do wyboru był dostępne dwie implementacje i nie wiadomo, którą kontener powinien wybrać. Komunikat sugeruje użycie `@Primary` lub `@Qualifier`
+
+# D2
+
+`@Primary` ustawia konkretną klasę jako główną implementację do wyboru, gdy istnieje kilka klas implementujących ten sam interfejs.

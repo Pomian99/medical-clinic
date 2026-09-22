@@ -1,8 +1,10 @@
 package io.github.pomian99.medical_clinic.notification;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 @Component
+@Primary
 public class EmailReminderSender implements ReminderSender{
 
     @Override
