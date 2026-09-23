@@ -26,3 +26,16 @@ Consider marking one of the beans as @Primary, updating the consumer to accept m
 # D3
 
 Po dodaniu `@Qualifier` nad polem zamiast tworzenia konstruktora ręcznie, aplikacja uruchomiła się i zbudowała się poprawnie, lecz wykorzystała `EmailReminderSender` jako implementację `ReminderSender`.
+
+# D4
+
+### I
+Z perspektywy Springa `@Component` oraz `@Service` mają takie samo działanie. Oznaczają klasy, które powinny być utworzone jako Beany zarządzane przez Springa.
+
+Dla czytającego są one oznaczeniem z funkcji, jaką spełnia dana klasa. Dodanie adnotacji `@Service` sugeruje, że klasa implementuje logikę biznesową aplikacji.
+
+### II
+Jest to klasa zewnętrzna i nie mamy kontroli nad jej implementacją. Any wprowadzić ją do kontenera należy utworzyć klasę konfiguracji wykorzystując adnotację `@Configuration`. Wewnątrz tej klasy tworzymy metodę zwracającą obiekt, który chcemy dodać do kontenera z adnotacją `@Bean` ponad nią.
+
+### III
+Sprawdzam, czy inne beany powstają poprawnie. Przeglądam czy ścieżka danej klasy nie wychodzi poza zakres widoczności Springa.

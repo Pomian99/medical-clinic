@@ -1,6 +1,5 @@
 package io.github.pomian99.medical_clinic.notification;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
