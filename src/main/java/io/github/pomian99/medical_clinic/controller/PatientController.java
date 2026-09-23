@@ -32,4 +32,11 @@ public class PatientController {
     public Patient createPatient(@RequestBody Patient patient) {
         return patientService.create(patient);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Patient> updatePatient(@PathVariable long id, @RequestBody Patient patient) {
+        return patientService.update(id, patient)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 }

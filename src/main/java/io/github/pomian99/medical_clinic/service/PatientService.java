@@ -30,4 +30,18 @@ public class PatientService {
         repository.save(patient);
         return patient;
     }
+
+    public Optional<Patient> update(long id, Patient patient) {
+        return repository.findById(id)
+                .map(existing -> {
+                    existing.setEmail(patient.getEmail());
+                    existing.setPassword(patient.getPassword());
+                    existing.setIdCardNo(patient.getIdCardNo());
+                    existing.setFirstName(patient.getFirstName());
+                    existing.setLastName(patient.getLastName());
+                    existing.setPhoneNumber(patient.getPhoneNumber());
+                    existing.setBirthday(patient.getBirthday());
+                    return existing;
+                });
+    }
 }
