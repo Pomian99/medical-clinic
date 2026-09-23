@@ -22,11 +22,12 @@ public class PatientService {
         return repository.findById(id);
     }
 
-    public void create(Patient patient) {
+    public Patient create(Patient patient) {
         if (repository.findByEmail(patient.getEmail()).isPresent()) {
             throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", patient.getEmail()));
         }
 
         repository.save(patient);
+        return patient;
     }
 }

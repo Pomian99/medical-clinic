@@ -3,9 +3,8 @@ package io.github.pomian99.medical_clinic.controller;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.service.PatientService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -18,5 +17,11 @@ public class PatientController {
     @GetMapping
     public List<Patient> getPatients() {
         return patientService.findAll();
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Patient createPatient(@RequestBody Patient patient) {
+        return patientService.create(patient);
     }
 }
