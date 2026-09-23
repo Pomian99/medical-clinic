@@ -44,4 +44,8 @@ public class PatientService {
                     return existing;
                 });
     }
+
+    public boolean delete(long id) {
+        return repository.deleteById(id);
+    }
 }
