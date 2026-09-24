@@ -1,0 +1,20 @@
+info:
+  name: Get Patient By Email
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/patients?email=anna.nowak@example.com"
+  params:
+    - name: email
+      value: anna.nowak@example.com
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
