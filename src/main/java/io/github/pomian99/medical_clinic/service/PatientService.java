@@ -49,6 +49,14 @@ public class PatientService {
                 });
     }
 
+    public Optional<Patient> updatePassword(long id, String password) {
+        return repository.findById(id)
+                .map(existing -> {
+                    existing.setPassword(password);
+                    return existing;
+                });
+    }
+
     public boolean delete(long id) {
         return repository.deleteById(id);
     }
