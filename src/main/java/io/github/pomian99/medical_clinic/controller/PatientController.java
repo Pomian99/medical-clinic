@@ -20,6 +20,13 @@ public class PatientController {
         return patientService.findAll();
     }
 
+    @GetMapping(params = "email")
+    public ResponseEntity<Patient> getPatientByEmail(@RequestParam String email) {
+        return patientService.findByEmail(email)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Patient> getPatientById(@PathVariable long id) {
         return patientService.findById(id)

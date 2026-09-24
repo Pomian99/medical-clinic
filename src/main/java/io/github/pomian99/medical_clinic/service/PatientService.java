@@ -22,6 +22,10 @@ public class PatientService {
         return repository.findById(id);
     }
 
+    public Optional<Patient> findByEmail(String email) {
+        return repository.findByEmail(email);
+    }
+
     public Patient create(Patient patient) {
         if (repository.findByEmail(patient.getEmail()).isPresent()) {
             throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", patient.getEmail()));
