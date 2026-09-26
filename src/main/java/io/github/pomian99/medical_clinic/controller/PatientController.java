@@ -1,5 +1,6 @@
 package io.github.pomian99.medical_clinic.controller;
 
+import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.service.PatientService;
 import lombok.RequiredArgsConstructor;
@@ -17,20 +18,24 @@ public class PatientController {
     private final PatientService patientService;
 
     @GetMapping
-    public List<Patient> getPatients() {
-        return patientService.findAll();
+    public List<PatientDto> getPatients() {
+        return patientService.findAll().stream()
+                .map(PatientDto::from)
+                .toList();
     }
 
     @GetMapping(params = "email")
-    public ResponseEntity<Patient> getPatientByEmail(@RequestParam String email) {
+    public ResponseEntity<PatientDto> getPatientByEmail(@RequestParam String email) {
         return patientService.findByEmail(email)
+                .map(PatientDto::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Patient> getPatientById(@PathVariable long id) {
+    public ResponseEntity<PatientDto> getPatientById(@PathVariable long id) {
         return patientService.findById(id)
+                .map(PatientDto::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
