@@ -2,7 +2,7 @@ package io.github.pomian99.medical_clinic.controller;
 
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
-import io.github.pomian99.medical_clinic.model.Patient;
+import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import io.github.pomian99.medical_clinic.service.PatientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -48,8 +48,8 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PatientDto> updatePatient(@PathVariable long id, @RequestBody Patient patient) {
-        return patientService.update(id, patient)
+    public ResponseEntity<PatientDto> updatePatient(@PathVariable long id, @RequestBody PatientUpdateCommand command) {
+        return patientService.update(id, command)
                 .map(PatientDto::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

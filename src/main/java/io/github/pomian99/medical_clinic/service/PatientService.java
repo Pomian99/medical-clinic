@@ -1,6 +1,7 @@
 package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
+import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.repository.InMemoryPatientRepository;
@@ -44,16 +45,14 @@ public class PatientService {
         return patient;
     }
 
-    public Optional<Patient> update(long id, Patient patient) {
+    public Optional<Patient> update(long id, PatientUpdateCommand command) {
         return repository.findById(id)
                 .map(existing -> {
-                    existing.setEmail(patient.getEmail());
-                    existing.setPassword(patient.getPassword());
-                    existing.setIdCardNo(patient.getIdCardNo());
-                    existing.setFirstName(patient.getFirstName());
-                    existing.setLastName(patient.getLastName());
-                    existing.setPhoneNumber(patient.getPhoneNumber());
-                    existing.setBirthday(patient.getBirthday());
+                    existing.setEmail(command.email());
+                    existing.setFirstName(command.firstName());
+                    existing.setLastName(command.lastName());
+                    existing.setPhoneNumber(command.phoneNumber());
+                    existing.setBirthday(command.birthday());
                     return existing;
                 });
     }
