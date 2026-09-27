@@ -1,5 +1,6 @@
 package io.github.pomian99.medical_clinic.service;
 
+import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
 import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.repository.InMemoryPatientRepository;
@@ -26,11 +27,19 @@ public class PatientService {
         return repository.findByEmail(email);
     }
 
-    public Patient create(Patient patient) {
-        if (repository.findByEmail(patient.getEmail()).isPresent()) {
-            throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", patient.getEmail()));
+    public Patient create(PatientCreateCommand command) {
+        if (repository.findByEmail(command.email()).isPresent()) {
+            throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", command.email()));
         }
 
+        Patient patient = new Patient();
+        patient.setEmail(command.email());
+        patient.setPassword(command.password());
+        patient.setIdCardNo(command.idCardNo());
+        patient.setFirstName(command.firstName());
+        patient.setLastName(command.lastName());
+        patient.setPhoneNumber(command.phoneNumber());
+        patient.setBirthday(command.birthday());
         repository.save(patient);
         return patient;
     }

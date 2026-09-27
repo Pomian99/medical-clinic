@@ -1,5 +1,6 @@
 package io.github.pomian99.medical_clinic.controller;
 
+import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.service.PatientService;
@@ -42,23 +43,25 @@ public class PatientController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Patient createPatient(@RequestBody Patient patient) {
-        return patientService.create(patient);
+    public PatientDto createPatient(@RequestBody PatientCreateCommand command) {
+        return PatientDto.from(patientService.create(command));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Patient> updatePatient(@PathVariable long id, @RequestBody Patient patient) {
+    public ResponseEntity<PatientDto> updatePatient(@PathVariable long id, @RequestBody Patient patient) {
         return patientService.update(id, patient)
+                .map(PatientDto::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}/password")
-    public ResponseEntity<Patient> updatePatientPassword(
+    public ResponseEntity<PatientDto> updatePatientPassword(
             @PathVariable long id,
             @RequestBody Map<String, String> body
     ) {
         return patientService.updatePassword(id, body.get("password"))
+                .map(PatientDto::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
