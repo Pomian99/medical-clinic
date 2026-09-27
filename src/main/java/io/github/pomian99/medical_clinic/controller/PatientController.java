@@ -1,5 +1,6 @@
 package io.github.pomian99.medical_clinic.controller;
 
+import io.github.pomian99.medical_clinic.dto.EditPasswordCommand;
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
@@ -10,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/patients")
@@ -58,9 +58,9 @@ public class PatientController {
     @PatchMapping("/{id}/password")
     public ResponseEntity<PatientDto> updatePatientPassword(
             @PathVariable long id,
-            @RequestBody Map<String, String> body
-    ) {
-        return patientService.updatePassword(id, body.get("password"))
+            @RequestBody EditPasswordCommand command
+            ) {
+        return patientService.updatePassword(id, command.password())
                 .map(PatientDto::from)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
