@@ -32,15 +32,7 @@ public class PatientService {
         if (repository.findByEmail(command.email()).isPresent()) {
             throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", command.email()));
         }
-
-        Patient patient = new Patient();
-        patient.setEmail(command.email());
-        patient.setPassword(command.password());
-        patient.setIdCardNo(command.idCardNo());
-        patient.setFirstName(command.firstName());
-        patient.setLastName(command.lastName());
-        patient.setPhoneNumber(command.phoneNumber());
-        patient.setBirthday(command.birthday());
+        Patient patient = Patient.create(command);
         repository.save(patient);
         return patient;
     }
@@ -48,11 +40,7 @@ public class PatientService {
     public Optional<Patient> update(long id, PatientUpdateCommand command) {
         return repository.findById(id)
                 .map(existing -> {
-                    existing.setEmail(command.email());
-                    existing.setFirstName(command.firstName());
-                    existing.setLastName(command.lastName());
-                    existing.setPhoneNumber(command.phoneNumber());
-                    existing.setBirthday(command.birthday());
+                    existing.update(command);
                     return existing;
                 });
     }
