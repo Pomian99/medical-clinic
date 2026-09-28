@@ -22,11 +22,30 @@ public class PatientService {
         return repository.findById(id);
     }
 
-    public void create(Patient patient) {
+    public Patient create(Patient patient) {
         if (repository.findByEmail(patient.getEmail()).isPresent()) {
             throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", patient.getEmail()));
         }
 
         repository.save(patient);
+        return patient;
+    }
+
+    public Optional<Patient> update(long id, Patient patient) {
+        return repository.findById(id)
+                .map(existing -> {
+                    existing.setEmail(patient.getEmail());
+                    existing.setPassword(patient.getPassword());
+                    existing.setIdCardNo(patient.getIdCardNo());
+                    existing.setFirstName(patient.getFirstName());
+                    existing.setLastName(patient.getLastName());
+                    existing.setPhoneNumber(patient.getPhoneNumber());
+                    existing.setBirthday(patient.getBirthday());
+                    return existing;
+                });
+    }
+
+    public boolean delete(long id) {
+        return repository.deleteById(id);
     }
 }
