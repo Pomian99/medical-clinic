@@ -3,6 +3,7 @@ package io.github.pomian99.medical_clinic.service;
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
+import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.repository.InMemoryPatientRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class PatientService {
     private final InMemoryPatientRepository repository;
+    private final PatientMapper mapper;
 
     public List<Patient> findAll() {
         return repository.findAll();
@@ -32,7 +34,7 @@ public class PatientService {
         if (repository.findByEmail(command.email()).isPresent()) {
             throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", command.email()));
         }
-        Patient patient = Patient.create(command);
+        Patient patient = mapper.toEntity(command);
         repository.save(patient);
         return patient;
     }
@@ -40,7 +42,7 @@ public class PatientService {
     public Optional<Patient> update(long id, PatientUpdateCommand command) {
         return repository.findById(id)
                 .map(existing -> {
-                    existing.update(command);
+                    mapper.update(existing, command);
                     return existing;
                 });
     }

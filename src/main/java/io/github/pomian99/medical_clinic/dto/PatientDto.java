@@ -12,14 +12,4 @@ public record PatientDto(
     String phoneNumber,
     LocalDate birthday
 ) {
-    public static PatientDto from(Patient patient) {
-        return new PatientDto(
-                patient.getId(),
-                patient.getEmail(),
-                patient.getFirstName(),
-                patient.getLastName(),
-                patient.getPhoneNumber(),
-                patient.getBirthday()
-        );
-    }
 }
