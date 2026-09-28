@@ -1,0 +1,28 @@
+info:
+  name: Replace Patient Data
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/patients/1"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "anna.nowak@example.com",
+        "password": "tajne123",
+        "idCardNo": "ABC123456",
+        "firstName": "Anna",
+        "lastName": "Nowakówna",
+        "phoneNumber": "600100200",
+        "birthday": "1990-05-12"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

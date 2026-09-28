@@ -1,0 +1,28 @@
+info:
+  name: Create Patient
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/patients"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "anna.nowak@example.com",
+        "password": "tajne123",
+        "idCardNo": "ABC123456",
+        "firstName": "Anna",
+        "lastName": "Nowak",
+        "phoneNumber": "600100200",
+        "birthday": "1990-05-12"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

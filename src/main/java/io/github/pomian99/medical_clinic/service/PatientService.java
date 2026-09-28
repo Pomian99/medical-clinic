@@ -22,6 +22,10 @@ public class PatientService {
         return repository.findById(id);
     }
 
+    public Optional<Patient> findByEmail(String email) {
+        return repository.findByEmail(email);
+    }
+
     public Patient create(Patient patient) {
         if (repository.findByEmail(patient.getEmail()).isPresent()) {
             throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", patient.getEmail()));
@@ -41,6 +45,14 @@ public class PatientService {
                     existing.setLastName(patient.getLastName());
                     existing.setPhoneNumber(patient.getPhoneNumber());
                     existing.setBirthday(patient.getBirthday());
+                    return existing;
+                });
+    }
+
+    public Optional<Patient> updatePassword(long id, String password) {
+        return repository.findById(id)
+                .map(existing -> {
+                    existing.setPassword(password);
                     return existing;
                 });
     }
