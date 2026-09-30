@@ -31,6 +31,8 @@ public class PatientService {
     }
 
     public Patient create(PatientCreateCommand command) {
+        // Business Validation: this rule requires checking other club members,
+        // so it cannot be handled by field-level validation annotations.
         if (repository.findByEmail(command.email()).isPresent()) {
             throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", command.email()));
         }
