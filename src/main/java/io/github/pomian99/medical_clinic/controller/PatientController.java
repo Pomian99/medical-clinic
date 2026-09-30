@@ -27,19 +27,13 @@ public class PatientController {
     }
 
     @GetMapping(params = "email")
-    public ResponseEntity<PatientDto> getPatientByEmail(@RequestParam String email) {
-        return patientService.findByEmail(email)
-                .map(mapper::toDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public PatientDto getPatientByEmail(@RequestParam String email) {
+        return mapper.toDto(patientService.findByEmail(email));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PatientDto> getPatientById(@PathVariable long id) {
-        return patientService.findById(id)
-                .map(mapper::toDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public PatientDto getPatientById(@PathVariable long id) {
+        return mapper.toDto(patientService.findById(id));
     }
 
     @PostMapping
@@ -49,31 +43,24 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PatientDto> updatePatient(
+    public PatientDto updatePatient(
             @PathVariable long id,
             @Valid @RequestBody PatientUpdateCommand command
     ) {
-        return patientService.update(id, command)
-                .map(mapper::toDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return mapper.toDto(patientService.update(id, command));
     }
 
     @PatchMapping("/{id}/password")
-    public ResponseEntity<PatientDto> updatePatientPassword(
+    public PatientDto updatePatientPassword(
             @PathVariable long id,
             @Valid @RequestBody EditPasswordCommand command
             ) {
-        return patientService.updatePassword(id, command.password())
-                .map(mapper::toDto)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return mapper.toDto(patientService.updatePassword(id, command.password()));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePatient(@PathVariable long id) {
-        return patientService.delete(id)
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.notFound().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePatient(@PathVariable long id) {
+        patientService.delete(id);
     }
 }
