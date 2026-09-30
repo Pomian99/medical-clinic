@@ -1,11 +1,12 @@
 package io.github.pomian99.medical_clinic.exception;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.CONFLICT)
-public class PatientAlreadyExistsException extends RuntimeException {
-    public PatientAlreadyExistsException(String message) {
-        super(message);
+public class PatientAlreadyExistsException extends MedicalClinicException {
+    public PatientAlreadyExistsException(String email) {
+        super(
+                String.format("Patient with email: %s already exists.", email),
+                HttpStatus.CONFLICT
+        );
     }
 }

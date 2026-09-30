@@ -34,7 +34,7 @@ public class PatientService {
         // Business Validation: this rule requires checking other club members,
         // so it cannot be handled by field-level validation annotations.
         if (repository.findByEmail(command.email()).isPresent()) {
-            throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", command.email()));
+            throw new PatientAlreadyExistsException(command.email());
         }
         Patient patient = mapper.toEntity(command);
         repository.save(patient);
