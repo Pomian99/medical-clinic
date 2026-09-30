@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Comparator;
@@ -40,27 +41,45 @@ public class GlobalExceptionHandler {
                 .toList();
         log.warn("Request rejected: {} validation rules failed", errors.size());
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST, "request body failed validation");
+                HttpStatus.BAD_REQUEST,
+                "request body failed validation"
+        );
         problem.setProperty("errors", errors);
         return problem;
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException exception) {
+        log.warn("Wrong type in path variable: {}", exception.getName());
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "path variable " + exception.getName() + " has a wrong type"
+        );
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ProblemDetail handleUnreadable(HttpMessageNotReadableException exception) {
         log.warn("Unreadable request body");
         return ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST, "request body is not valid JSON");
+                HttpStatus.BAD_REQUEST,
+                "request body is not valid JSON"
+        );
     }
     @ExceptionHandler(NoResourceFoundException.class)
     public ProblemDetail handleNoRoute(NoResourceFoundException exception) {
         log.warn("Route not found: {}", exception.getResourcePath());
-        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "no such endpoint");
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                "no such endpoint"
+        );
     }
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnknown(Exception exception) {
         log.error("Unhandled exception", exception);
         return ProblemDetail.forStatusAndDetail(
-                HttpStatus.INTERNAL_SERVER_ERROR, "Unknown error");
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Unknown error"
+        );
     }
 }
