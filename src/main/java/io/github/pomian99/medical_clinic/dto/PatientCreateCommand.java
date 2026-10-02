@@ -11,10 +11,16 @@ import java.time.LocalDate;
 public record PatientCreateCommand(
         @NotBlank(message = "Email cannot be blank")
         @Email(message = "Email must be valid")
+        @Size(max = 254, message = "Email cannot be longer than 254 characters")
         String email,
 
         @NotBlank(message = "Password cannot be blank")
-        @Size(min = 8, message = "Password must contain at least 8 characters")
+        @Size(min = 8, max = 64, message = "Password must contain between 8 and 64 characters")
+        @Pattern(
+                regexp = "(?=.*\\p{Ll})(?=.*\\p{Lu})(?=.*\\d)(?=.*[^\\p{L}\\p{N}\\s])\\S+",
+                message = "Password must contain a lowercase letter, an uppercase letter, "
+                        + "a digit and a special character, and no whitespace"
+        )
         String password,
 
         @NotBlank(message = "ID card number cannot be blank")
@@ -25,9 +31,19 @@ public record PatientCreateCommand(
         String idCardNo,
 
         @NotBlank(message = "First name cannot be blank")
+        @Size(max = 50, message = "First name cannot be longer than 50 characters")
+        @Pattern(
+                regexp = "\\p{L}+([ '-]\\p{L}+)*",
+                message = "First name may contain only letters, spaces, hyphens and apostrophes"
+        )
         String firstName,
 
         @NotBlank(message = "Last name cannot be blank")
+        @Size(max = 50, message = "Last name cannot be longer than 50 characters")
+        @Pattern(
+                regexp = "\\p{L}+([ '-]\\p{L}+)*",
+                message = "Last name may contain only letters, spaces, hyphens and apostrophes"
+        )
         String lastName,
 
         @NotBlank(message = "Phone number cannot be blank")
