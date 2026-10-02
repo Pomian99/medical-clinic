@@ -12,7 +12,7 @@ public class PatientNotFoundException extends MedicalClinicException{
 
     public PatientNotFoundException(String email) {
         super(
-                String.format("Patient with id %s not found", email),
+                String.format("Patient with email %s not found", email),
                 HttpStatus.NOT_FOUND
         );
     }
