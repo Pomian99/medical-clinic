@@ -35,12 +35,36 @@ public class PatientController {
     }
 
     @Operation(summary = "Find Patient with given email")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "patient found"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "no patient with this email exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
     @GetMapping(params = "email")
     public PatientDto getPatientByEmail(@RequestParam String email) {
         return mapper.toDto(patientService.findByEmail(email));
     }
 
     @Operation(summary = "Find Patient with given id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "patient found"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "the id in the path is not a number",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "no patient with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
     @GetMapping("/{id}")
     public PatientDto getPatientById(@PathVariable long id) {
         return mapper.toDto(patientService.findById(id));
@@ -69,6 +93,22 @@ public class PatientController {
     }
 
     @Operation(summary = "Update data of Patient with given id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "patient data updated"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "request body failed validation or is not valid JSON, "
+                            + "or the id in the path is not a number",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "no patient with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
     @PutMapping("/{id}")
     public PatientDto updatePatient(
             @PathVariable long id,
@@ -78,6 +118,22 @@ public class PatientController {
     }
 
     @Operation(summary = "Update password of Patient with given id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "patient password updated"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "request body failed validation or is not valid JSON, "
+                            + "or the id in the path is not a number",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "no patient with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
     @PatchMapping("/{id}/password")
     public PatientDto updatePatientPassword(
             @PathVariable long id,
@@ -87,6 +143,21 @@ public class PatientController {
     }
 
     @Operation(summary = "Delete Patient with given id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "patient deleted"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "the id in the path is not a number",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "no patient with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePatient(@PathVariable long id) {
