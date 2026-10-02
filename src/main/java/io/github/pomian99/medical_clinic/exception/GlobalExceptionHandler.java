@@ -65,6 +65,7 @@ public class GlobalExceptionHandler {
                 "request body is not valid JSON"
         );
     }
+
     @ExceptionHandler(NoResourceFoundException.class)
     public ProblemDetail handleNoRoute(NoResourceFoundException exception) {
         log.warn("Route not found: {}", exception.getResourcePath());
@@ -79,7 +80,7 @@ public class GlobalExceptionHandler {
         log.error("Unhandled exception", exception);
         return ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "Unknown error"
+                "unknown error"
         );
     }
 }
