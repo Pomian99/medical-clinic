@@ -7,10 +7,15 @@ import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.service.PatientService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,6 +47,21 @@ public class PatientController {
     }
 
     @Operation(summary = "Create new Patient")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "patient created"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "request body failed validation",
+                    content = @Content(
+                        schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "this email is already taken",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public PatientDto createPatient(@Valid @RequestBody PatientCreateCommand command) {
