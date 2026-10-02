@@ -1,7 +1,5 @@
 package io.github.pomian99.medical_clinic.model;
 
-import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
-import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -19,4 +17,8 @@ public class Patient {
     private String lastName;
     private String phoneNumber;
     private LocalDate birthday;
+
+    public void updatePassword(String password) {
+        this.password = password;
+    }
 }

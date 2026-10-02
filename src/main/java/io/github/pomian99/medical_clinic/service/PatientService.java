@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -46,18 +45,20 @@ public class PatientService {
 
     public Patient update(long id, PatientUpdateCommand command) {
         return repository.findById(id)
-                .map(existing -> {
-                    mapper.update(existing, command);
-                    return existing;
-                }).orElseThrow(() -> new PatientNotFoundException(id));
+                .map(patient -> {
+                    mapper.update(patient, command);
+                    return patient;
+                })
+                .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
     public Patient updatePassword(long id, String password) {
         return repository.findById(id)
-                .map(existing -> {
-                    existing.setPassword(password);
-                    return existing;
-                }).orElseThrow(() -> new PatientNotFoundException(id));
+                .map(patient -> {
+                    patient.updatePassword(password);
+                    return patient;
+                })
+                .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
     public void delete(long id) {
