@@ -1,6 +1,9 @@
 package io.github.pomian99.medical_clinic.service;
 
+import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
+import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
+import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.repository.InMemoryPatientRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +16,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class PatientService {
     private final InMemoryPatientRepository repository;
+    private final PatientMapper mapper;
 
     public List<Patient> findAll() {
         return repository.findAll();
@@ -26,25 +30,19 @@ public class PatientService {
         return repository.findByEmail(email);
     }
 
-    public Patient create(Patient patient) {
-        if (repository.findByEmail(patient.getEmail()).isPresent()) {
-            throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", patient.getEmail()));
+    public Patient create(PatientCreateCommand command) {
+        if (repository.findByEmail(command.email()).isPresent()) {
+            throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", command.email()));
         }
-
+        Patient patient = mapper.toEntity(command);
         repository.save(patient);
         return patient;
     }
 
-    public Optional<Patient> update(long id, Patient patient) {
+    public Optional<Patient> update(long id, PatientUpdateCommand command) {
         return repository.findById(id)
                 .map(existing -> {
-                    existing.setEmail(patient.getEmail());
-                    existing.setPassword(patient.getPassword());
-                    existing.setIdCardNo(patient.getIdCardNo());
-                    existing.setFirstName(patient.getFirstName());
-                    existing.setLastName(patient.getLastName());
-                    existing.setPhoneNumber(patient.getPhoneNumber());
-                    existing.setBirthday(patient.getBirthday());
+                    mapper.update(existing, command);
                     return existing;
                 });
     }

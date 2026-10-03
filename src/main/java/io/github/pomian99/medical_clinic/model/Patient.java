@@ -1,5 +1,7 @@
 package io.github.pomian99.medical_clinic.model;
 
+import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
+import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import lombok.*;
 
 import java.time.LocalDate;

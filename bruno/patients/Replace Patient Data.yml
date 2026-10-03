@@ -11,8 +11,6 @@ http:
     data: |-
       {
         "email": "anna.nowak@example.com",
-        "password": "tajne123",
-        "idCardNo": "ABC123456",
         "firstName": "Anna",
         "lastName": "Nowakówna",
         "phoneNumber": "600100200",
