@@ -13,7 +13,8 @@ The documentation is disabled in production. The `prod` profile
 (`src/main/resources/application-prod.properties`) sets
 `springdoc.api-docs.enabled=false` and `springdoc.swagger-ui.enabled=false`, so both
 addresses return 404 while the API itself keeps working. Activate the profile with
-`java -jar target/medical-clinic-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod`.
+`java -jar target/medical-clinic-<version>.jar --spring.profiles.active=prod`, where
+`<version>` is the project version from `pom.xml`.
 
 **What it does not check:** the OpenAPI description says what the API *declares*, not what
 it *does*. Nothing executes it, so an endpoint can declare a `409` and never return it, and
