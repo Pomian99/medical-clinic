@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,30 +33,41 @@ public class PatientService {
     }
 
     public Patient create(PatientCreateCommand command) {
-        // Business Validation: this rule requires checking other club members,
+        // Business Validation: this rule requires checking other patients,
         // so it cannot be handled by field-level validation annotations.
         if (repository.findByEmail(command.email()).isPresent()) {
             throw new PatientAlreadyExistsException(command.email());
         }
+
         Patient patient = mapper.toEntity(command);
         repository.save(patient);
         return patient;
     }
 
     public Patient update(long id, PatientUpdateCommand command) {
-        return repository.findById(id)
-                .map(existing -> {
-                    mapper.update(existing, command);
-                    return existing;
-                }).orElseThrow(() -> new PatientNotFoundException(id));
+        Patient patient = findById(id);
+
+        // Business Validation: this rule requires checking other patients,
+        // so it cannot be handled by field-level validation annotations.
+        // The patient may keep their own email, but it cannot belong to someone else.
+        boolean emailTakenByOther = repository.findByEmail(command.email())
+                .filter(owner -> owner.getId() != id)
+                .isPresent();
+        if (emailTakenByOther) {
+            throw new PatientAlreadyExistsException(command.email());
+        }
+
+        mapper.update(patient, command);
+        return patient;
     }
 
     public Patient updatePassword(long id, String password) {
         return repository.findById(id)
-                .map(existing -> {
-                    existing.setPassword(password);
-                    return existing;
-                }).orElseThrow(() -> new PatientNotFoundException(id));
+                .map(patient -> {
+                    patient.updatePassword(password);
+                    return patient;
+                })
+                .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
     public void delete(long id) {

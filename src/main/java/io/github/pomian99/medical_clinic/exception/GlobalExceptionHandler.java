@@ -12,9 +12,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestControllerAdvice
 @Slf4j
@@ -30,19 +28,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException exception) {
-        List<Map<String, String>> errors = exception.getFieldErrors().stream()
+        List<FieldViolation> errors = exception.getFieldErrors().stream()
                 .sorted(Comparator.comparing(FieldError::getField))
-                .map(error -> {
-                    Map<String, String> entry = new LinkedHashMap<>();
-                    entry.put("field", error.getField());
-                    entry.put("message", String.valueOf(error.getDefaultMessage()));
-                    return entry;
-                })
+                .map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))
                 .toList();
         log.warn("Request rejected: {} validation rules failed", errors.size());
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                "request body failed validation"
+                "Request body failed validation"
         );
         problem.setProperty("errors", errors);
         return problem;
@@ -53,7 +46,7 @@ public class GlobalExceptionHandler {
         log.warn("Wrong type in path variable: {}", exception.getName());
         return ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                "path variable " + exception.getName() + " has a wrong type"
+                "Path variable " + exception.getName() + " has a wrong type"
         );
     }
 
@@ -62,15 +55,16 @@ public class GlobalExceptionHandler {
         log.warn("Unreadable request body");
         return ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                "request body is not valid JSON"
+                "Request body is not valid JSON"
         );
     }
+
     @ExceptionHandler(NoResourceFoundException.class)
     public ProblemDetail handleNoRoute(NoResourceFoundException exception) {
         log.warn("Route not found: {}", exception.getResourcePath());
         return ProblemDetail.forStatusAndDetail(
                 HttpStatus.NOT_FOUND,
-                "no such endpoint"
+                "No such endpoint"
         );
     }
 
@@ -81,5 +75,8 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Unknown error"
         );
+    }
+
+    private record FieldViolation(String field, String message) {
     }
 }

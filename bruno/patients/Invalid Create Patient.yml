@@ -10,8 +10,8 @@ http:
     type: json
     data: |-
       {
-        "email": "to-nie-jest-email",
-        "password": "krotkie",
+        "email": "not-an-email",
+        "password": "short",
         "idCardNo": "XYZ",
         "firstName": "",
         "lastName": "Nowak",
