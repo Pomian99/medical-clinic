@@ -117,6 +117,12 @@ public class PatientController {
                     description = "no patient with this id exists",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "this email already belongs to another patient",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
                     ))
     })
     @PutMapping("/{id}")

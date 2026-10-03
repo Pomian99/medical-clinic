@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,18 +39,25 @@ public class PatientService {
         if (repository.findByEmail(command.email()).isPresent()) {
             throw new PatientAlreadyExistsException(command.email());
         }
+
         Patient patient = mapper.toEntity(command);
         repository.save(patient);
         return patient;
     }
 
     public Patient update(long id, PatientUpdateCommand command) {
-        return repository.findById(id)
-                .map(patient -> {
-                    mapper.update(patient, command);
-                    return patient;
-                })
-                .orElseThrow(() -> new PatientNotFoundException(id));
+        Patient patient = findById(id);
+
+        // Business Validation: this rule requires checking other patients,
+        // so it cannot be handled by field-level validation annotations.
+        // The patient may keep their own email, but it cannot belong to someone else.
+        Optional<Patient> emailOwner = repository.findByEmail(command.email());
+        if (emailOwner.isPresent() && !emailOwner.get().getId().equals(id)) {
+            throw new PatientAlreadyExistsException(command.email());
+        }
+
+        mapper.update(patient, command);
+        return patient;
     }
 
     public Patient updatePassword(long id, String password) {
