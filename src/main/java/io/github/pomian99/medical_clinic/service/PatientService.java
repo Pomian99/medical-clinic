@@ -3,6 +3,7 @@ package io.github.pomian99.medical_clinic.service;
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
+import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.repository.InMemoryPatientRepository;
@@ -22,42 +23,46 @@ public class PatientService {
         return repository.findAll();
     }
 
-    public Optional<Patient> findById(long id) {
-        return repository.findById(id);
+    public Patient findById(long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
-    public Optional<Patient> findByEmail(String email) {
-        return repository.findByEmail(email);
+    public Patient findByEmail(String email) {
+        return repository.findByEmail(email)
+                .orElseThrow(() -> new PatientNotFoundException(email));
     }
 
     public Patient create(PatientCreateCommand command) {
         // Business Validation: this rule requires checking other club members,
         // so it cannot be handled by field-level validation annotations.
         if (repository.findByEmail(command.email()).isPresent()) {
-            throw new PatientAlreadyExistsException(String.format("Patient with email: %s already exists.", command.email()));
+            throw new PatientAlreadyExistsException(command.email());
         }
         Patient patient = mapper.toEntity(command);
         repository.save(patient);
         return patient;
     }
 
-    public Optional<Patient> update(long id, PatientUpdateCommand command) {
+    public Patient update(long id, PatientUpdateCommand command) {
         return repository.findById(id)
                 .map(existing -> {
                     mapper.update(existing, command);
                     return existing;
-                });
+                }).orElseThrow(() -> new PatientNotFoundException(id));
     }
 
-    public Optional<Patient> updatePassword(long id, String password) {
+    public Patient updatePassword(long id, String password) {
         return repository.findById(id)
                 .map(existing -> {
                     existing.setPassword(password);
                     return existing;
-                });
+                }).orElseThrow(() -> new PatientNotFoundException(id));
     }
 
-    public boolean delete(long id) {
-        return repository.deleteById(id);
+    public void delete(long id) {
+        if (!repository.deleteById(id)) {
+            throw new PatientNotFoundException(id);
+        }
     }
 }
