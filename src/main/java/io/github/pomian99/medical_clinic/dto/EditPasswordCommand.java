@@ -4,14 +4,19 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.PASSWORD_MAX_LENGTH;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.PASSWORD_MIN_LENGTH;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.PASSWORD_PATTERN_MESSAGE;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.PASSWORD_REGEX;
+
 public record EditPasswordCommand(
         @NotBlank(message = "Password cannot be blank")
-        @Size(min = 8, max = 64, message = "Password must contain between 8 and 64 characters")
-        @Pattern(
-                regexp = "(?=.*\\p{Ll})(?=.*\\p{Lu})(?=.*\\d)(?=.*[^\\p{L}\\p{N}\\s])\\S+",
-                message = "Password must contain a lowercase letter, an uppercase letter, "
-                        + "a digit and a special character, and no whitespace"
+        @Size(
+                min = PASSWORD_MIN_LENGTH,
+                max = PASSWORD_MAX_LENGTH,
+                message = "Password must contain between {min} and {max} characters"
         )
+        @Pattern(regexp = PASSWORD_REGEX, message = PASSWORD_PATTERN_MESSAGE)
         String password
 ) {
 }

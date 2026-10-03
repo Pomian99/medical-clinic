@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -51,8 +50,10 @@ public class PatientService {
         // Business Validation: this rule requires checking other patients,
         // so it cannot be handled by field-level validation annotations.
         // The patient may keep their own email, but it cannot belong to someone else.
-        Optional<Patient> emailOwner = repository.findByEmail(command.email());
-        if (emailOwner.isPresent() && !emailOwner.get().getId().equals(id)) {
+        boolean emailTakenByOther = repository.findByEmail(command.email())
+                .filter(owner -> owner.getId() != id)
+                .isPresent();
+        if (emailTakenByOther) {
             throw new PatientAlreadyExistsException(command.email());
         }
 

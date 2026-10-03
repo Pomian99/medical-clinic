@@ -8,19 +8,31 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.EMAIL_MAX_LENGTH;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.FIRST_NAME_PATTERN_MESSAGE;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.LAST_NAME_PATTERN_MESSAGE;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.NAME_MAX_LENGTH;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.NAME_REGEX;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.PASSWORD_MAX_LENGTH;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.PASSWORD_MIN_LENGTH;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.PASSWORD_PATTERN_MESSAGE;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.PASSWORD_REGEX;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.PHONE_NUMBER_PATTERN_MESSAGE;
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.PHONE_NUMBER_REGEX;
+
 public record PatientCreateCommand(
         @NotBlank(message = "Email cannot be blank")
         @Email(message = "Email must be valid")
-        @Size(max = 254, message = "Email cannot be longer than 254 characters")
+        @Size(max = EMAIL_MAX_LENGTH, message = "Email cannot be longer than {max} characters")
         String email,
 
         @NotBlank(message = "Password cannot be blank")
-        @Size(min = 8, max = 64, message = "Password must contain between 8 and 64 characters")
-        @Pattern(
-                regexp = "(?=.*\\p{Ll})(?=.*\\p{Lu})(?=.*\\d)(?=.*[^\\p{L}\\p{N}\\s])\\S+",
-                message = "Password must contain a lowercase letter, an uppercase letter, "
-                        + "a digit and a special character, and no whitespace"
+        @Size(
+                min = PASSWORD_MIN_LENGTH,
+                max = PASSWORD_MAX_LENGTH,
+                message = "Password must contain between {min} and {max} characters"
         )
+        @Pattern(regexp = PASSWORD_REGEX, message = PASSWORD_PATTERN_MESSAGE)
         String password,
 
         @NotBlank(message = "ID card number cannot be blank")
@@ -31,26 +43,17 @@ public record PatientCreateCommand(
         String idCardNo,
 
         @NotBlank(message = "First name cannot be blank")
-        @Size(max = 50, message = "First name cannot be longer than 50 characters")
-        @Pattern(
-                regexp = "\\p{L}+([ '-]\\p{L}+)*",
-                message = "First name may contain only letters, spaces, hyphens and apostrophes"
-        )
+        @Size(max = NAME_MAX_LENGTH, message = "First name cannot be longer than {max} characters")
+        @Pattern(regexp = NAME_REGEX, message = FIRST_NAME_PATTERN_MESSAGE)
         String firstName,
 
         @NotBlank(message = "Last name cannot be blank")
-        @Size(max = 50, message = "Last name cannot be longer than 50 characters")
-        @Pattern(
-                regexp = "\\p{L}+([ '-]\\p{L}+)*",
-                message = "Last name may contain only letters, spaces, hyphens and apostrophes"
-        )
+        @Size(max = NAME_MAX_LENGTH, message = "Last name cannot be longer than {max} characters")
+        @Pattern(regexp = NAME_REGEX, message = LAST_NAME_PATTERN_MESSAGE)
         String lastName,
 
         @NotBlank(message = "Phone number cannot be blank")
-        @Pattern(
-                regexp = "\\d{9}",
-                message = "Phone number must contain exactly 9 digits"
-        )
+        @Pattern(regexp = PHONE_NUMBER_REGEX, message = PHONE_NUMBER_PATTERN_MESSAGE)
         String phoneNumber,
 
         @Past(message = "Birthday must be a date in the past")

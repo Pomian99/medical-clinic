@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Patients", description = "Medical Clinic Patients: create, read, update, delete")
+@Tag(name = "Patients", description = "Medical clinic patients: create, read, update, delete")
 @RestController
 @RequestMapping("/patients")
 @RequiredArgsConstructor
@@ -38,18 +38,18 @@ public class PatientController {
     private final PatientService patientService;
     private final PatientMapper mapper;
 
-    @Operation(summary = "List all Patients")
+    @Operation(summary = "List all patients")
     @GetMapping
     public List<PatientDto> getPatients() {
         return mapper.toDto(patientService.findAll());
     }
 
-    @Operation(summary = "Find Patient with given email")
+    @Operation(summary = "Find patient with given email")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "patient found"),
+            @ApiResponse(responseCode = "200", description = "Patient found"),
             @ApiResponse(
                     responseCode = "404",
-                    description = "no patient with this email exists",
+                    description = "No patient with this email exists",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))
@@ -59,18 +59,18 @@ public class PatientController {
         return mapper.toDto(patientService.findByEmail(email));
     }
 
-    @Operation(summary = "Find Patient with given id")
+    @Operation(summary = "Find patient with given id")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "patient found"),
+            @ApiResponse(responseCode = "200", description = "Patient found"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "the id in the path is not a number",
+                    description = "The id in the path is not a number",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     )),
             @ApiResponse(
                     responseCode = "404",
-                    description = "no patient with this id exists",
+                    description = "No patient with this id exists",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))
@@ -80,18 +80,18 @@ public class PatientController {
         return mapper.toDto(patientService.findById(id));
     }
 
-    @Operation(summary = "Create new Patient")
+    @Operation(summary = "Create new patient")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "patient created"),
+            @ApiResponse(responseCode = "201", description = "Patient created"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "request body failed validation",
+                    description = "Request body failed validation or is not valid JSON",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     )),
             @ApiResponse(
                     responseCode = "409",
-                    description = "this email is already taken",
+                    description = "This email is already taken",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))
@@ -102,25 +102,25 @@ public class PatientController {
         return mapper.toDto(patientService.create(command));
     }
 
-    @Operation(summary = "Update data of Patient with given id")
+    @Operation(summary = "Update data of patient with given id")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "patient data updated"),
+            @ApiResponse(responseCode = "200", description = "Patient data updated"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "request body failed validation or is not valid JSON, "
+                    description = "Request body failed validation or is not valid JSON, "
                             + "or the id in the path is not a number",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     )),
             @ApiResponse(
                     responseCode = "404",
-                    description = "no patient with this id exists",
+                    description = "No patient with this id exists",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     )),
             @ApiResponse(
                     responseCode = "409",
-                    description = "this email already belongs to another patient",
+                    description = "This email already belongs to another patient",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))
@@ -133,19 +133,19 @@ public class PatientController {
         return mapper.toDto(patientService.update(id, command));
     }
 
-    @Operation(summary = "Update password of Patient with given id")
+    @Operation(summary = "Update password of patient with given id")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "patient password updated"),
+            @ApiResponse(responseCode = "200", description = "Patient password updated"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "request body failed validation or is not valid JSON, "
+                    description = "Request body failed validation or is not valid JSON, "
                             + "or the id in the path is not a number",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     )),
             @ApiResponse(
                     responseCode = "404",
-                    description = "no patient with this id exists",
+                    description = "No patient with this id exists",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))
@@ -158,18 +158,18 @@ public class PatientController {
         return mapper.toDto(patientService.updatePassword(id, command.password()));
     }
 
-    @Operation(summary = "Delete Patient with given id")
+    @Operation(summary = "Delete patient with given id")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "patient deleted"),
+            @ApiResponse(responseCode = "204", description = "Patient deleted"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "the id in the path is not a number",
+                    description = "The id in the path is not a number",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     )),
             @ApiResponse(
                     responseCode = "404",
-                    description = "no patient with this id exists",
+                    description = "No patient with this id exists",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))

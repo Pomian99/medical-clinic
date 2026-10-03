@@ -30,10 +30,7 @@ public class InMemoryPatientRepository {
     }
 
     public void save(Patient patient) {
-        if (patient.getId() == null) {
-            patient.setId(idCounter.getAndIncrement());
-        }
-
+        patient.setId(idCounter.getAndIncrement());
         patients.add(patient);
     }
 
