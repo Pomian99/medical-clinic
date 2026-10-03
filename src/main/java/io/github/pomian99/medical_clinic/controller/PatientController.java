@@ -6,6 +6,7 @@ import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.service.PatientService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,12 +44,15 @@ public class PatientController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public PatientDto createPatient(@RequestBody PatientCreateCommand command) {
+    public PatientDto createPatient(@Valid @RequestBody PatientCreateCommand command) {
         return mapper.toDto(patientService.create(command));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PatientDto> updatePatient(@PathVariable long id, @RequestBody PatientUpdateCommand command) {
+    public ResponseEntity<PatientDto> updatePatient(
+            @PathVariable long id,
+            @Valid @RequestBody PatientUpdateCommand command
+    ) {
         return patientService.update(id, command)
                 .map(mapper::toDto)
                 .map(ResponseEntity::ok)
@@ -58,7 +62,7 @@ public class PatientController {
     @PatchMapping("/{id}/password")
     public ResponseEntity<PatientDto> updatePatientPassword(
             @PathVariable long id,
-            @RequestBody EditPasswordCommand command
+            @Valid @RequestBody EditPasswordCommand command
             ) {
         return patientService.updatePassword(id, command.password())
                 .map(mapper::toDto)
