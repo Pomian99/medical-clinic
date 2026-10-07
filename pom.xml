@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>io.github.pomian99</groupId>
 	<artifactId>medical-clinic</artifactId>
-	<version>0.1.0</version>
+	<version>0.2.0-SNAPSHOT</version>
 	<name>medical-clinic</name>
 	<description>REST API for managing medical clinic</description>
 	<!-- The empty elements below are intentional: they stop this project from inheriting
