@@ -30,16 +30,16 @@ public class Patient {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true, length = 20)
     private String idCardNo;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String lastName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private String phoneNumber;
     private LocalDate birthday;
 
