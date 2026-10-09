@@ -56,14 +56,14 @@ public class PatientService {
         }
 
         mapper.update(patient, command);
-        return patient;
+        return repository.save(patient);
     }
 
     public Patient updatePassword(long id, String password) {
         return repository.findById(id)
                 .map(patient -> {
                     patient.updatePassword(password);
-                    return patient;
+                    return repository.save(patient);
                 })
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
