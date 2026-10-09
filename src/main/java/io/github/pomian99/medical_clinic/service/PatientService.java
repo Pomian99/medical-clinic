@@ -35,7 +35,7 @@ public class PatientService {
     public Patient create(PatientCreateCommand command) {
         // Business Validation: this rule requires checking other patients,
         // so it cannot be handled by field-level validation annotations.
-        if (repository.findByEmail(command.email()).isPresent()) {
+        if (repository.existsByEmail(command.email())) {
             throw new PatientAlreadyExistsException(command.email());
         }
 
@@ -43,17 +43,13 @@ public class PatientService {
     }
 
     public Patient update(long id, PatientUpdateCommand command) {
-        Patient patient = findById(id);
-
         // Business Validation: this rule requires checking other patients,
         // so it cannot be handled by field-level validation annotations.
         // The patient may keep their own email, but it cannot belong to someone else.
-        boolean emailTakenByOther = repository.findByEmail(command.email())
-                .filter(owner -> owner.getId() != id)
-                .isPresent();
-        if (emailTakenByOther) {
+        if (repository.existsByEmailAndIdNot(command.email(), id)) {
             throw new PatientAlreadyExistsException(command.email());
         }
+        Patient patient = findById(id);
 
         mapper.update(patient, command);
         return repository.save(patient);
