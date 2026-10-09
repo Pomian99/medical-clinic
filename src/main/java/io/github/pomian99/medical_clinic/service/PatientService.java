@@ -6,7 +6,7 @@ import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.model.Patient;
-import io.github.pomian99.medical_clinic.repository.InMemoryPatientRepository;
+import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +15,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PatientService {
-    private final InMemoryPatientRepository repository;
+    private final PatientRepository repository;
     private final PatientMapper mapper;
 
     public List<Patient> findAll() {
@@ -39,9 +39,7 @@ public class PatientService {
             throw new PatientAlreadyExistsException(command.email());
         }
 
-        Patient patient = mapper.toEntity(command);
-        repository.save(patient);
-        return patient;
+        return repository.save(mapper.toEntity(command));
     }
 
     public Patient update(long id, PatientUpdateCommand command) {
@@ -71,8 +69,9 @@ public class PatientService {
     }
 
     public void delete(long id) {
-        if (!repository.deleteById(id)) {
+        if (!repository.existsById(id)) {
             throw new PatientNotFoundException(id);
         }
+        repository.deleteById(id);
     }
 }
