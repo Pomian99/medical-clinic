@@ -1,0 +1,25 @@
+# Local PostgreSQL for development.
+# Start: docker compose up -d --wait
+# Stop: docker compose down (data is kept); wipe data as well: docker compose down -v
+services:
+  postgres:
+    image: postgres:16
+    container_name: clinic-db
+    environment:
+      POSTGRES_DB: clinic
+      POSTGRES_USER: clinic
+      POSTGRES_PASSWORD: clinic
+    ports:
+      - "5432:5432"
+    volumes:
+      - clinic-data:/var/lib/postgresql/data
+    # Lets `docker compose up --wait` block until the database accepts connections,
+    # not just until the container has started.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clinic -d clinic"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  clinic-data:

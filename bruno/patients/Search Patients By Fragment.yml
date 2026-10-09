@@ -1,0 +1,22 @@
+info:
+  name: Search Patients By Fragment
+  type: http
+  seq: 9
+
+http:
+  method: GET
+  url: "{{baseUrl}}/patients?fragment=KOW"
+  params:
+    - name: fragment
+      value: KOW
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+docs: Expected 200 OK with Ewa Kowalczyk from data.sql; the search ignores letter case, so KOW matches Kowalczyk
