@@ -9,14 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PatientRepository extends JpaRepository<Patient, Long> {
-    Optional<Patient> findByEmail(String email);
-
-    boolean existsByEmail(String email);
-
-    // Spring Data builds the query from the method name: where email = ? and id <> ?.
-    // True when the email belongs to some other patient. The patient with the given id
-    // is left out, so a patient who keeps their own email on update is not a conflict.
-    boolean existsByEmailAndIdNot(String email, Long id);
+    Optional<Patient> findByUserEmail(String email);
 
     @Query(value = """
             select p from Patient p
