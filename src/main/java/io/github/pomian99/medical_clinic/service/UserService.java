@@ -6,6 +6,7 @@ import io.github.pomian99.medical_clinic.exception.UserInUseException;
 import io.github.pomian99.medical_clinic.exception.UserNotFoundException;
 import io.github.pomian99.medical_clinic.mapper.UserMapper;
 import io.github.pomian99.medical_clinic.model.User;
+import io.github.pomian99.medical_clinic.repository.DoctorRepository;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
+    private final DoctorRepository doctorRepository;
     private final UserMapper mapper;
 
     public List<User> findAll() {
@@ -48,7 +50,7 @@ public class UserService {
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException(id);
         }
-        if (patientRepository.existsByUserId(id)) {
+        if (patientRepository.existsByUserId(id) || doctorRepository.existsByUserId(id)) {
             throw new UserInUseException(id);
         }
         userRepository.deleteById(id);

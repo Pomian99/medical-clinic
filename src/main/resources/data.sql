@@ -17,3 +17,13 @@ VALUES ((SELECT id FROM users WHERE email = 'anna.nowak@example.com'), 'ABC12345
        ((SELECT id FROM users WHERE email = 'ewa.kowalczyk@example.com'), 'ABC123458',
         'Ewa', 'Kowalczyk', '500600702', DATE '1978-03-21')
     ON CONFLICT (user_id) DO NOTHING;
+
+-- A doctor works the same way: the account first, then the doctor on that account.
+INSERT INTO users (email, password, role)
+VALUES ('katarzyna.wrobel@example.com', 'Silne321!', 'DOCTOR')
+    ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO doctors (user_id, first_name, last_name, specialization)
+VALUES ((SELECT id FROM users WHERE email = 'katarzyna.wrobel@example.com'),
+        'Katarzyna', 'Wróbel', 'CARDIOLOGIST')
+    ON CONFLICT (user_id) DO NOTHING;
