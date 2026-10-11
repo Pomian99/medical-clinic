@@ -2,9 +2,11 @@ package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.UserCreateCommand;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
+import io.github.pomian99.medical_clinic.exception.UserInUseException;
 import io.github.pomian99.medical_clinic.exception.UserNotFoundException;
 import io.github.pomian99.medical_clinic.mapper.UserMapper;
 import io.github.pomian99.medical_clinic.model.User;
+import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final PatientRepository patientRepository;
     private final UserMapper mapper;
 
     public List<User> findAll() {
@@ -39,5 +42,15 @@ public class UserService {
         }
 
         return userRepository.save(mapper.toEntity(command));
+    }
+
+    public void deleteById(long id) {
+        if (!userRepository.existsById(id)) {
+            throw new UserNotFoundException(id);
+        }
+        if (patientRepository.existsByUserId(id)) {
+            throw new UserInUseException(id);
+        }
+        userRepository.deleteById(id);
     }
 }
