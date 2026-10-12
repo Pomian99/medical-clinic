@@ -1,0 +1,30 @@
+info:
+  name: Create Visit Doctor Not Found
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/visits"
+  body:
+    type: json
+    data: |-
+      {
+        "doctorId": -1,
+        "startsAt": "2026-12-01T09:00:00",
+        "endsAt": "2026-12-01T09:15:00"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "404"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

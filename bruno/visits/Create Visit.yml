@@ -1,0 +1,36 @@
+info:
+  name: Create Visit
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/visits"
+  body:
+    type: json
+    data: |-
+      {
+        "doctorId": 1,
+        "startsAt": "2026-12-01T09:00:00",
+        "endsAt": "2026-12-01T09:15:00"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+    - expression: res.body.patientId
+      operator: isNull
+
+docs: |-
+  A free slot for doctor 1 (Katarzyna Wróbel from data.sql). She is the first doctor
+  inserted into an empty database, so her id is 1 however many times the application starts.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
