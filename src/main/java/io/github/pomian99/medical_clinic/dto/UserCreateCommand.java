@@ -3,7 +3,6 @@ package io.github.pomian99.medical_clinic.dto;
 import io.github.pomian99.medical_clinic.model.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -28,7 +27,7 @@ public record UserCreateCommand(
         @Pattern(regexp = PASSWORD_REGEX, message = PASSWORD_PATTERN_MESSAGE)
         String password,
 
-        @NotNull(message = "Role is required")
+        // Optional: an account without a role gets one when a doctor is attached to it.
         Role role
 ) {
 }

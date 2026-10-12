@@ -32,7 +32,8 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    // Empty for an account created on its own: it gets a role together with
+    // the doctor (or patient) that is attached to it.
     @Enumerated(EnumType.STRING)
     private Role role;
 

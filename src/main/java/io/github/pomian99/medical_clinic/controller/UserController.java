@@ -79,7 +79,8 @@ public class UserController {
     @Operation(
             summary = "Create new user",
             description = "Creates an account on its own, without a patient attached. "
-                    + "The response never contains the password."
+                    + "The role is optional: an account without one gets DOCTOR when "
+                    + "a doctor is created on it. The response never contains the password."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User created"),
