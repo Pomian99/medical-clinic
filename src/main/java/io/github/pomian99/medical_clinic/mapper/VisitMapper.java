@@ -7,6 +7,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface VisitMapper {
 
@@ -14,6 +16,8 @@ public interface VisitMapper {
     @Mapping(target = "doctorId", source = "doctor.id")
     @Mapping(target = "patientId", source = "patient.id")
     VisitDto toDto(Visit visit);
+
+    List<VisitDto> toDto(List<Visit> visits);
 
     // The command carries only doctorId; the service loads the doctor and sets it.
     @Mapping(target = "id", ignore = true)

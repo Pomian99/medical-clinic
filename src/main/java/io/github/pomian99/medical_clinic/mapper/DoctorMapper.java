@@ -20,5 +20,6 @@ public interface DoctorMapper {
     // The command carries only userId; the service loads the account and sets it.
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "visits", ignore = true)
     Doctor toEntity(DoctorCreateCommand command);
 }

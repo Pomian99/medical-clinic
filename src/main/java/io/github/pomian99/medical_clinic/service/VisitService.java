@@ -10,6 +10,8 @@ import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class VisitService {
@@ -26,5 +28,9 @@ public class VisitService {
         visit.setDoctor(doctor);
 
         return visitRepository.save(visit);
+    }
+
+    public List<Visit> findAllByDoctorId(long id) {
+        return visitRepository.findAllByDoctorId(id);
     }
 }
