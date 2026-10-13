@@ -27,3 +27,9 @@ INSERT INTO doctors (user_id, first_name, last_name, specialization)
 VALUES ((SELECT id FROM users WHERE email = 'katarzyna.wrobel@example.com'),
         'Katarzyna', 'Wróbel', 'CARDIOLOGIST')
     ON CONFLICT (user_id) DO NOTHING;
+
+-- Facilities point to nothing, so they need no lookups; the unique name keeps the insert repeatable.
+INSERT INTO facilities (name, city, zip_code, street, number)
+VALUES ('Przychodnia Centrum', 'Kraków', '31-001', 'Floriańska', '10'),
+       ('Przychodnia Nowa Huta', 'Kraków', '31-940', 'Osiedle Centrum A', '5')
+    ON CONFLICT (name) DO NOTHING;
