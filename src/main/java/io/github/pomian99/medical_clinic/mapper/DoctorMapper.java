@@ -3,11 +3,13 @@ package io.github.pomian99.medical_clinic.mapper;
 import io.github.pomian99.medical_clinic.dto.DoctorCreateCommand;
 import io.github.pomian99.medical_clinic.dto.DoctorDto;
 import io.github.pomian99.medical_clinic.model.Doctor;
+import io.github.pomian99.medical_clinic.model.Facility;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
 import java.util.List;
+import java.util.Set;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface DoctorMapper {
@@ -23,4 +25,11 @@ public interface DoctorMapper {
     @Mapping(target = "visits", ignore = true)
     @Mapping(target = "facilities", ignore = true)
     Doctor toEntity(DoctorCreateCommand command);
+
+    default List<String> facilitiesNames(Set<Facility> facilities) {
+        return facilities.stream()
+            .map(Facility::getName)
+            .sorted()
+            .toList();
+    }
 }

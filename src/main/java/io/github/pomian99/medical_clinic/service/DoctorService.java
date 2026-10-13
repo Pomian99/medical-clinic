@@ -6,11 +6,14 @@ import io.github.pomian99.medical_clinic.exception.DoctorHasVisitsException;
 import io.github.pomian99.medical_clinic.exception.DoctorNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserRoleConflictException;
+import io.github.pomian99.medical_clinic.exception.FacilityNotFoundException;
 import io.github.pomian99.medical_clinic.mapper.DoctorMapper;
 import io.github.pomian99.medical_clinic.model.Doctor;
+import io.github.pomian99.medical_clinic.model.Facility;
 import io.github.pomian99.medical_clinic.model.Role;
 import io.github.pomian99.medical_clinic.model.User;
 import io.github.pomian99.medical_clinic.repository.DoctorRepository;
+import io.github.pomian99.medical_clinic.repository.FacilityRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,7 @@ public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final UserRepository userRepository;
     private final VisitRepository visitRepository;
+    private final FacilityRepository facilityRepository;
     private final DoctorMapper mapper;
 
     public List<Doctor> findAll() {
@@ -72,5 +76,21 @@ public class DoctorService {
             throw new DoctorHasVisitsException(id);
         }
         doctorRepository.deleteById(id);
+    }
+
+    public Doctor addFacility(long doctorId, long facilityId) {
+        Doctor doctor = findById(doctorId);
+        Facility facility = facilityRepository.findById(facilityId)
+            .orElseThrow(() -> new FacilityNotFoundException(facilityId));
+        doctor.addFacility(facility);
+        return doctorRepository.save(doctor);
+    }
+
+    public Doctor removeFacility(long doctorId, long facilityId) {
+        Doctor doctor = findById(doctorId);
+        Facility facility = facilityRepository.findById(facilityId)
+            .orElseThrow(() -> new FacilityNotFoundException(facilityId));
+        doctor.removeFacility(facility);
+        return doctorRepository.save(doctor);
     }
 }

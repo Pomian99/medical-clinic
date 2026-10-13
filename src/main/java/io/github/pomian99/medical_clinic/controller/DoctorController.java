@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Doctors", description = "Medical clinic doctors: create, read, delete")
+@Tag(name = "Doctors", description = "Medical clinic doctors: create, read, delete, assign facilities")
 @RestController
 @RequestMapping("/doctors")
 @RequiredArgsConstructor
@@ -90,6 +90,55 @@ public class DoctorController {
     @ResponseStatus(HttpStatus.CREATED)
     public DoctorDto createDoctor(@Valid @RequestBody DoctorCreateCommand command) {
         return mapper.toDto(doctorService.create(command));
+    }
+
+    @Operation(
+            summary = "Assign facility to doctor",
+            description = "Repeating the request is safe: a doctor is assigned to a facility at most once."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Facility assigned, the doctor is returned"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "An id in the path is not a number",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "No doctor or no facility with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
+    @PostMapping(path = "/{id}/facilities/{facilityId}")
+    public DoctorDto addFacility(@PathVariable long id, @PathVariable long facilityId) {
+        return mapper.toDto(doctorService.addFacility(id, facilityId));
+    }
+
+    @Operation(
+            summary = "Unassign facility from doctor",
+            description = "Removes only the assignment; the doctor and the facility stay. "
+                    + "Unassigning a facility the doctor does not have changes nothing."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Facility unassigned, the doctor is returned"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "An id in the path is not a number",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "No doctor or no facility with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
+    @DeleteMapping(path = "/{id}/facilities/{facilityId}")
+    public DoctorDto removeFacility(@PathVariable long id, @PathVariable long facilityId) {
+        return mapper.toDto(doctorService.removeFacility(id, facilityId));
     }
 
     @Operation(
