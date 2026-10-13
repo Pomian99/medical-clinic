@@ -1,0 +1,26 @@
+info:
+  name: Assign Doctor To Facility
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/doctors/1/facilities/{{facilityId}}"
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+
+docs: |-
+  Doctor 1 is Katarzyna Wróbel from data.sql. She is the first doctor inserted into an
+  empty database, so her id is 1 however many times the application starts.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
