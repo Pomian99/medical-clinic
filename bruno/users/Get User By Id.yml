@@ -1,0 +1,28 @@
+info:
+  name: Get User By Id
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{baseUrl}}/users/{{userId}}"
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.email
+      operator: eq
+      value: adam.lis@example.com
+    - expression: res.body.role
+      operator: eq
+      value: DOCTOR
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

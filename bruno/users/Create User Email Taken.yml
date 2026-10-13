@@ -1,0 +1,30 @@
+info:
+  name: Create User Email Taken
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/users"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "jan.wisniewski@example.com",
+        "password": "Secret#123",
+        "role": "DOCTOR"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "409"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

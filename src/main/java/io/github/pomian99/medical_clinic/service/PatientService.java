@@ -2,77 +2,87 @@ package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
-import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
+import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
 import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.model.Patient;
-import io.github.pomian99.medical_clinic.repository.InMemoryPatientRepository;
+import io.github.pomian99.medical_clinic.model.Role;
+import io.github.pomian99.medical_clinic.model.User;
+import io.github.pomian99.medical_clinic.repository.PatientRepository;
+import io.github.pomian99.medical_clinic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class PatientService {
-    private final InMemoryPatientRepository repository;
+    private final PatientRepository patientRepository;
+    private final UserRepository userRepository;
     private final PatientMapper mapper;
 
     public List<Patient> findAll() {
-        return repository.findAll();
+        return patientRepository.findAll();
     }
 
     public Patient findById(long id) {
-        return repository.findById(id)
+        return patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
     public Patient findByEmail(String email) {
-        return repository.findByEmail(email)
+        return patientRepository.findByUserEmail(email)
                 .orElseThrow(() -> new PatientNotFoundException(email));
     }
 
+    public List<Patient> findByFragment(String fragment) {
+        return patientRepository.searchByFragment(fragment);
+    }
+
+    // Two inserts (users, then patients) must succeed or fail together: without a
+    // transaction a failed patient insert would leave an account nobody can register to.
+    @Transactional
     public Patient create(PatientCreateCommand command) {
-        // Business Validation: this rule requires checking other patients,
+        // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
-        if (repository.findByEmail(command.email()).isPresent()) {
-            throw new PatientAlreadyExistsException(command.email());
+        if (userRepository.existsByEmail(command.email())) {
+            throw new UserAlreadyExistsException(command.email());
         }
 
+        User user = userRepository.save(User.builder()
+            .email(command.email())
+            .password(command.password())
+            .role(Role.PATIENT)
+            .build());
+
         Patient patient = mapper.toEntity(command);
-        repository.save(patient);
-        return patient;
+        patient.setUser(user);
+
+        return patientRepository.save(patient);
     }
 
     public Patient update(long id, PatientUpdateCommand command) {
         Patient patient = findById(id);
 
-        // Business Validation: this rule requires checking other patients,
-        // so it cannot be handled by field-level validation annotations.
-        // The patient may keep their own email, but it cannot belong to someone else.
-        boolean emailTakenByOther = repository.findByEmail(command.email())
-                .filter(owner -> owner.getId() != id)
-                .isPresent();
-        if (emailTakenByOther) {
-            throw new PatientAlreadyExistsException(command.email());
-        }
-
         mapper.update(patient, command);
-        return patient;
+        return patientRepository.save(patient);
     }
 
     public Patient updatePassword(long id, String password) {
-        return repository.findById(id)
+        return patientRepository.findById(id)
                 .map(patient -> {
                     patient.updatePassword(password);
-                    return patient;
+                    return patientRepository.save(patient);
                 })
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
     public void delete(long id) {
-        if (!repository.deleteById(id)) {
+        if (!patientRepository.existsById(id)) {
             throw new PatientNotFoundException(id);
         }
+        patientRepository.deleteById(id);
     }
 }

@@ -1,0 +1,37 @@
+info:
+  name: Create Doctor User
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/users"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "tomasz.mazur@example.com",
+        "password": "Secret#123",
+        "role": "DOCTOR"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("doctorUserId", res.body.id);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+
+docs: |-
+  Account ids shift with every application start (ON CONFLICT in data.sql still uses
+  sequence values), so the id is saved here and used by the next requests.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

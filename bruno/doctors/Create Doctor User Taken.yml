@@ -1,0 +1,33 @@
+info:
+  name: Create Doctor User Taken
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/doctors"
+  body:
+    type: json
+    data: |-
+      {
+        "userId": {{doctorUserId}},
+        "firstName": "Adam",
+        "lastName": "Mazur",
+        "specialization": "PEDIATRICIAN"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "409"
+
+docs: A second doctor on the account that already has one.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,39 @@
+info:
+  name: Create Facility
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/facilities"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Przychodnia Krowodrza",
+        "city": "Kraków",
+        "zipCode": "31-150",
+        "street": "Królewska",
+        "number": "20"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("facilityId", res.body.id);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+
+docs: |-
+  data.sql already inserts two facilities, so the id of the new one depends on the
+  database. It is saved here and used by the next requests instead of being hard-coded.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
