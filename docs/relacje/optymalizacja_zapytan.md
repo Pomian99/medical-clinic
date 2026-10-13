@@ -13,6 +13,6 @@ Hibernate: select f1_0.doctor_id,f1_1.id,f1_1.city,f1_1.name,f1_1.number,f1_1.st
 Hibernate: select f1_0.doctor_id,f1_1.id,f1_1.city,f1_1.name,f1_1.number,f1_1.street,f1_1.zip_code from doctor_facility f1_0 join facilities f1_1 on f1_1.id=f1_0.facility_id where f1_0.doctor_id=?
 ```
  - Pierwsze zapytanie pobiera listę doktorów.
- - Trzy kolejne wynikają z domyślnego ustawienia `FetchType.EAGER` na `@OneToOne` i są wywoływane automatycznie dla każdego doktora od razu po pierwszym SELECT.
+ - Trzy kolejne wynikają z domyślnego ustawienia `FetchType.EAGER` na `@OneToOne` dla Doctor.user i są wywoływane automatycznie dla każdego doktora od razu po pierwszym SELECT.
  - Trzy ostatnie są wywołane dla każdego doktora w momencie mapowania Doctor na DoctorDto w mapperze. 
 
