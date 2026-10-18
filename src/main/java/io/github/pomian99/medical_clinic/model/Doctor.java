@@ -1,5 +1,6 @@
 package io.github.pomian99.medical_clinic.model;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -45,7 +46,11 @@ public class Doctor {
     @Enumerated(EnumType.STRING)
     private Specialization specialization;
 
-    @OneToOne(optional = false, fetch = FetchType.LAZY)
+    // The account lives longer than the doctor: reception creates it first (POST /users)
+    // and a patient can sit on the same account. Saving and merging flow to the account,
+    // removing does not: deleting the doctor must leave the account and its patient in place.
+    @OneToOne(optional = false, fetch = FetchType.LAZY,
+        cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
