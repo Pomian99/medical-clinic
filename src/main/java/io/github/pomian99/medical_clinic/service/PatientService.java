@@ -43,7 +43,6 @@ public class PatientService {
 
     // Two inserts (users, then patients) must succeed or fail together: without a
     // transaction a failed patient insert would leave an account nobody can register to.
-    @Transactional
     public Patient create(PatientCreateCommand command) {
         // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
@@ -51,11 +50,11 @@ public class PatientService {
             throw new UserAlreadyExistsException(command.email());
         }
 
-        User user = userRepository.save(User.builder()
+        User user = User.builder()
             .email(command.email())
             .password(command.password())
             .role(Role.PATIENT)
-            .build());
+            .build();
 
         Patient patient = mapper.toEntity(command);
         patient.setUser(user);
