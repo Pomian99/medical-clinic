@@ -12,7 +12,6 @@ import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -57,7 +56,7 @@ public class PatientService {
             .build();
 
         Patient patient = mapper.toEntity(command);
-        patient.setUser(user);
+        patient.assignUser(user);
 
         return patientRepository.save(patient);
     }

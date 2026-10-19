@@ -40,8 +40,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    // Patient without user can't exist
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Patient patient;
+    private Patient patient;
 
     public void updatePassword(String password) {
         this.password = password;

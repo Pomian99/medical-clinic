@@ -41,4 +41,9 @@ public class Visit {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id")
     private Patient patient;
+
+    public void assignDoctor(Doctor doctor) {
+        this.doctor = doctor;
+        doctor.getVisits().add(this);
+    }
 }
