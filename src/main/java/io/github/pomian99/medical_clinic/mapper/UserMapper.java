@@ -15,5 +15,6 @@ public interface UserMapper {
     List<UserDto> toDto(List<User> users);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "patient", ignore = true)
     User toEntity(UserCreateCommand command);
 }
