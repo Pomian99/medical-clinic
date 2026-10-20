@@ -20,6 +20,19 @@ http:
       }
   auth: inherit
 
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("patientId", res.body.id);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+
+docs: |-
+  The folder works on its own patient, not on one from data.sql, so changing and deleting it
+  leaves the data other folders rely on in place. Its id is saved for the next requests.
+
 settings:
   encodeUrl: true
   timeout: 0
