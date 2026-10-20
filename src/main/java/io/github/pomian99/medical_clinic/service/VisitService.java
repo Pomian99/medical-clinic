@@ -12,6 +12,7 @@ import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +25,7 @@ public class VisitService {
     private final VisitRepository visitRepository;
     private final DoctorRepository doctorRepository;
     private final VisitMapper mapper;
+    private final Clock clock;
 
     public Visit create(VisitCreateCommand command) {
         validateSlot(command.startsAt(), command.endsAt());
@@ -47,7 +49,7 @@ public class VisitService {
     }
 
     private void validateSlot(LocalDateTime startsAt, LocalDateTime endsAt) {
-        if (startsAt.isBefore(LocalDateTime.now())) {
+        if (startsAt.isBefore(LocalDateTime.now(clock))) {
             throw new InvalidVisitException("Visit start must not be in the past");
         }
         if (startsAt.getMinute() % SLOT.toMinutes() != 0 || startsAt.getSecond() != 0 || startsAt.getNano() != 0) {
