@@ -31,10 +31,12 @@ public class DoctorService {
     private final FacilityRepository facilityRepository;
     private final DoctorMapper mapper;
 
+    @Transactional(readOnly = true)
     public List<Doctor> findAll() {
         return doctorRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Doctor findById(long id) {
         return doctorRepository.findById(id)
                 .orElseThrow(() -> new DoctorNotFoundException(id));
@@ -66,6 +68,7 @@ public class DoctorService {
         return doctorRepository.save(doctor);
     }
 
+    @Transactional
     public void delete(long id) {
         if (!doctorRepository.existsById(id)) {
             throw new DoctorNotFoundException(id);
@@ -78,19 +81,21 @@ public class DoctorService {
         doctorRepository.deleteById(id);
     }
 
+    @Transactional
     public Doctor addFacility(long doctorId, long facilityId) {
         Doctor doctor = findById(doctorId);
         Facility facility = facilityRepository.findById(facilityId)
             .orElseThrow(() -> new FacilityNotFoundException(facilityId));
         doctor.addFacility(facility);
-        return doctorRepository.save(doctor);
+        return doctor;
     }
 
+    @Transactional
     public Doctor removeFacility(long doctorId, long facilityId) {
         Doctor doctor = findById(doctorId);
         Facility facility = facilityRepository.findById(facilityId)
             .orElseThrow(() -> new FacilityNotFoundException(facilityId));
         doctor.removeFacility(facility);
-        return doctorRepository.save(doctor);
+        return doctor;
     }
 }
