@@ -3,6 +3,7 @@ package io.github.pomian99.medical_clinic.service;
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
 import io.github.pomian99.medical_clinic.exception.DoctorNotFoundException;
 import io.github.pomian99.medical_clinic.exception.InvalidVisitException;
+import io.github.pomian99.medical_clinic.exception.VisitOverlapsException;
 import io.github.pomian99.medical_clinic.mapper.VisitMapper;
 import io.github.pomian99.medical_clinic.model.Doctor;
 import io.github.pomian99.medical_clinic.model.Visit;
@@ -29,6 +30,10 @@ public class VisitService {
 
         Doctor doctor = doctorRepository.findById(command.doctorId())
                 .orElseThrow(() -> new DoctorNotFoundException(command.doctorId()));
+
+        if (visitRepository.existsByDoctorIdAndStartsAtBeforeAndEndsAtAfter(command.doctorId(), command.endsAt(), command.startsAt())) {
+            throw new VisitOverlapsException(command.doctorId(), command.startsAt(), command.endsAt());
+        }
 
         // A new visit is a free slot: it has a doctor, but no patient yet.
         Visit visit = mapper.toEntity(command);

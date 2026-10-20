@@ -59,13 +59,20 @@ public class VisitController {
             @ApiResponse(responseCode = "201", description = "Visit created"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Request body failed validation or is not valid JSON",
+                    description = "Request body failed validation, is not valid JSON, "
+                            + "or the slot is in the past or not made of whole 15-minute blocks",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     )),
             @ApiResponse(
                     responseCode = "404",
                     description = "No doctor with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "The doctor already has a visit overlapping this slot",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))
