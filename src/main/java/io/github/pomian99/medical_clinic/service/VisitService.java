@@ -16,6 +16,7 @@ import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -33,6 +34,7 @@ public class VisitService {
     private final VisitMapper mapper;
     private final Clock clock;
 
+    @Transactional
     public Visit create(VisitCreateCommand command) {
         validateSlot(command.startsAt(), command.endsAt());
 
@@ -50,6 +52,7 @@ public class VisitService {
         return visitRepository.save(visit);
     }
 
+    @Transactional
     public Visit book(long visitId, long patientId) {
         Visit visit = visitRepository.findById(visitId)
                 .orElseThrow(() -> new VisitNotFoundException(visitId));
@@ -67,10 +70,12 @@ public class VisitService {
         return visitRepository.save(visit);
     }
 
+    @Transactional(readOnly = true)
     public List<Visit> findAllByDoctorId(long id) {
         return visitRepository.findAllByDoctorId(id);
     }
 
+    @Transactional(readOnly = true)
     public List<Visit> findAllByPatientId(long id) {
         return visitRepository.findAllByPatientId(id);
     }

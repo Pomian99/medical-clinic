@@ -12,6 +12,7 @@ import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,26 +23,31 @@ public class PatientService {
     private final UserRepository userRepository;
     private final PatientMapper mapper;
 
+    @Transactional(readOnly = true)
     public List<Patient> findAll() {
         return patientRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Patient findById(long id) {
         return patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
+    @Transactional(readOnly = true)
     public Patient findByEmail(String email) {
         return patientRepository.findByUserEmail(email)
                 .orElseThrow(() -> new PatientNotFoundException(email));
     }
 
+    @Transactional(readOnly = true)
     public List<Patient> findByFragment(String fragment) {
         return patientRepository.searchByFragment(fragment);
     }
 
     // Two inserts (users, then patients) must succeed or fail together: without a
     // transaction a failed patient insert would leave an account nobody can register to.
+    @Transactional
     public Patient create(PatientCreateCommand command) {
         // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
@@ -61,6 +67,7 @@ public class PatientService {
         return patientRepository.save(patient);
     }
 
+    @Transactional
     public Patient update(long id, PatientUpdateCommand command) {
         Patient patient = findById(id);
 
@@ -68,7 +75,8 @@ public class PatientService {
         return patientRepository.save(patient);
     }
 
-    public Patient updatePassword(long id, String password) {
+    @Transactional
+    public Patient changePassword(long id, String password) {
         return patientRepository.findById(id)
                 .map(patient -> {
                     patient.updatePassword(password);
@@ -77,7 +85,8 @@ public class PatientService {
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
-    public void delete(long id) {
+    @Transactional
+    public void deleteById(long id) {
         if (!patientRepository.existsById(id)) {
             throw new PatientNotFoundException(id);
         }
