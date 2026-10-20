@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Visits", description = "Medical clinic visits: create, book, list by doctor")
+@Tag(name = "Visits", description = "Medical clinic visits: create, book, list by doctor or patient")
 @RestController
 @RequestMapping("/visits")
 @RequiredArgsConstructor
@@ -51,6 +51,25 @@ public class VisitController {
     @GetMapping
     public List<VisitDto> getVisitsByDoctorId(@RequestParam long doctorId) {
         return mapper.toDto(visitService.findAllByDoctorId(doctorId));
+    }
+
+    @Operation(
+            summary = "List visits of patient with given id",
+            description = "Returns visits booked by the patient. "
+                    + "A patient without visits, or an unknown patient id, gives an empty list."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Visits of the patient"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The id in the path is not a number",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
+    @GetMapping("/patient/{patientId}")
+    public List<VisitDto> getVisitsByPatientId(@PathVariable long patientId) {
+        return mapper.toDto(visitService.findAllByPatientId(patientId));
     }
 
     @Operation(

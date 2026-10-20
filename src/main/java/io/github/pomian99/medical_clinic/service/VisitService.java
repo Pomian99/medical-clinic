@@ -71,6 +71,10 @@ public class VisitService {
         return visitRepository.findAllByDoctorId(id);
     }
 
+    public List<Visit> findAllByPatientId(long id) {
+        return visitRepository.findAllByPatientId(id);
+    }
+
     private boolean isPast(LocalDateTime time) {
         return time.isBefore(LocalDateTime.now(clock));
     }
