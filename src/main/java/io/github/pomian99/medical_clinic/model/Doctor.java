@@ -12,7 +12,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -20,9 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @NoArgsConstructor
@@ -54,9 +51,6 @@ public class Doctor {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @OneToMany(mappedBy = "doctor", fetch = FetchType.LAZY)
-    private List<Visit> visits = new ArrayList<>();
-
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "doctor_facility",
             joinColumns = @JoinColumn(name = "doctor_id"),
@@ -65,11 +59,9 @@ public class Doctor {
 
     public void addFacility(Facility facility) {
         facilities.add(facility);
-        facility.getDoctors().add(this);
     }
 
     public void removeFacility(Facility facility) {
         facilities.remove(facility);
-        facility.getDoctors().remove(this);
     }
 }

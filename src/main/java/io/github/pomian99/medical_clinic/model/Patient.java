@@ -48,9 +48,4 @@ public class Patient {
     public void updatePassword(String password) {
          user.updatePassword(password);
     }
-
-    public void assignUser(User user) {
-        this.user = user;
-        user.setPatient(this);
-    }
 }

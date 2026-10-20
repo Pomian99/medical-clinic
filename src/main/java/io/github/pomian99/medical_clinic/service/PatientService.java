@@ -56,7 +56,7 @@ public class PatientService {
             .build();
 
         Patient patient = mapper.toEntity(command);
-        patient.assignUser(user);
+        patient.setUser(user);
 
         return patientRepository.save(patient);
     }

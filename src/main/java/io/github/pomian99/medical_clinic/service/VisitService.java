@@ -25,7 +25,7 @@ public class VisitService {
 
         // A new visit is a free slot: it has a doctor, but no patient yet.
         Visit visit = mapper.toEntity(command);
-        visit.assignDoctor(doctor);
+        visit.setDoctor(doctor);
 
         return visitRepository.save(visit);
     }
