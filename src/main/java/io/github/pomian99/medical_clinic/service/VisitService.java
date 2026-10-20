@@ -2,6 +2,7 @@ package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
 import io.github.pomian99.medical_clinic.exception.DoctorNotFoundException;
+import io.github.pomian99.medical_clinic.exception.InvalidSubstitutionException;
 import io.github.pomian99.medical_clinic.exception.InvalidVisitException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.VisitAlreadyBookedException;
@@ -68,6 +69,27 @@ public class VisitService {
 
         visit.setPatient(patient);
         return visit;
+    }
+
+    @Transactional
+    public List<Visit> substitute(long doctorId, long substituteId) {
+        if (doctorId == substituteId) {
+            throw new InvalidSubstitutionException(doctorId);
+        }
+        if (!doctorRepository.existsById(doctorId)) {
+            throw new DoctorNotFoundException(doctorId);
+        }
+        Doctor substitute = doctorRepository.findById(substituteId)
+                .orElseThrow(() -> new DoctorNotFoundException(substituteId));
+
+        List<Visit> visits = visitRepository.findAllByDoctorIdOrderByStartsAt(doctorId);
+        for (Visit visit : visits) {
+            if (visitRepository.existsByDoctorIdAndStartsAtBeforeAndEndsAtAfter(substituteId, visit.getEndsAt(), visit.getStartsAt())) {
+                throw new VisitOverlapsException(substituteId, visit.getStartsAt(), visit.getEndsAt());
+            }
+            visit.setDoctor(substitute);
+        }
+        return visits;
     }
 
     @Transactional(readOnly = true)

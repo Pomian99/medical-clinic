@@ -2,8 +2,12 @@ package io.github.pomian99.medical_clinic.controller;
 
 import io.github.pomian99.medical_clinic.dto.DoctorCreateCommand;
 import io.github.pomian99.medical_clinic.dto.DoctorDto;
+import io.github.pomian99.medical_clinic.dto.SubstitutionCommand;
+import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.mapper.DoctorMapper;
+import io.github.pomian99.medical_clinic.mapper.VisitMapper;
 import io.github.pomian99.medical_clinic.service.DoctorService;
+import io.github.pomian99.medical_clinic.service.VisitService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,13 +29,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Doctors", description = "Medical clinic doctors: create, read, delete, assign facilities")
+@Tag(name = "Doctors", description = "Medical clinic doctors: create, read, delete, assign facilities, substitute")
 @RestController
 @RequestMapping("/doctors")
 @RequiredArgsConstructor
 public class DoctorController {
     private final DoctorService doctorService;
+    private final VisitService visitService;
     private final DoctorMapper mapper;
+    private final VisitMapper visitMapper;
 
     @Operation(summary = "List all doctors")
     @GetMapping
@@ -139,6 +145,38 @@ public class DoctorController {
     @DeleteMapping(path = "/{id}/facilities/{facilityId}")
     public DoctorDto removeFacility(@PathVariable long id, @PathVariable long facilityId) {
         return mapper.toDto(doctorService.removeFacility(id, facilityId));
+    }
+
+    @Operation(
+            summary = "Move all visits of doctor to substitute",
+            description = "Visits move from the earliest one. If the substitute already has a visit "
+                    + "at the time of any of them, no visit is moved."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Visits moved, the moved visits are returned"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Request body failed validation or is not valid JSON, the id in the path "
+                            + "is not a number, or the substitute is the same doctor",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "No doctor or no substitute with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "The substitute already has a visit overlapping one of the visits",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
+    @PostMapping("/{id}/substitutions")
+    public List<VisitDto> substitute(@PathVariable long id, @Valid @RequestBody SubstitutionCommand command) {
+        return visitMapper.toDto(visitService.substitute(id, command.substituteId()));
     }
 
     @Operation(
