@@ -41,4 +41,8 @@ public class Visit {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id")
     private Patient patient;
+
+    public boolean isFree() {
+        return patient == null;
+    }
 }

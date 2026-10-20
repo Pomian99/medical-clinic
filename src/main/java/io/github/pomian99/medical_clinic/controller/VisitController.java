@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Visits", description = "Medical clinic visits: create, list by doctor")
+@Tag(name = "Visits", description = "Medical clinic visits: create, book, list by doctor")
 @RestController
 @RequestMapping("/visits")
 @RequiredArgsConstructor
@@ -81,5 +83,35 @@ public class VisitController {
     @ResponseStatus(HttpStatus.CREATED)
     public VisitDto createVisit(@Valid @RequestBody VisitCreateCommand command) {
         return mapper.toDto(visitService.create(command));
+    }
+
+    @Operation(
+            summary = "Book visit with given id for patient with given id",
+            description = "Assigns the patient to a free slot that has not started yet."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Visit booked"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "The visit is in the past, or an id in the path is not a number",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "No visit or no patient with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "The visit is already booked",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
+    @PatchMapping("/{id}/book/{patientId}")
+    public VisitDto bookVisit(@PathVariable long id, @PathVariable long patientId) {
+        return mapper.toDto(visitService.book(id, patientId));
     }
 }
