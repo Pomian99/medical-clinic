@@ -67,7 +67,7 @@ public class VisitService {
         }
 
         visit.setPatient(patient);
-        return visitRepository.save(visit);
+        return visit;
     }
 
     @Transactional(readOnly = true)

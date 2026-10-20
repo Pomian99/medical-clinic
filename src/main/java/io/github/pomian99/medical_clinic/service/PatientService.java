@@ -72,7 +72,7 @@ public class PatientService {
         Patient patient = findById(id);
 
         mapper.update(patient, command);
-        return patientRepository.save(patient);
+        return patient;
     }
 
     @Transactional
@@ -80,7 +80,7 @@ public class PatientService {
         return patientRepository.findById(id)
                 .map(patient -> {
                     patient.updatePassword(password);
-                    return patientRepository.save(patient);
+                    return patient;
                 })
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
