@@ -1,0 +1,30 @@
+info:
+  name: Invalid Create Patient
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{baseUrl}}/patients"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "not-an-email",
+        "password": "short",
+        "idCardNo": "XYZ",
+        "firstName": "",
+        "lastName": "Nowak",
+        "phoneNumber": "500",
+        "birthday": "2044-05-12"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+docs: Expected Error 400 Bad Request
