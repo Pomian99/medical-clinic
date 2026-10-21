@@ -6,7 +6,7 @@ import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.model.Patient;
-import io.github.pomian99.medical_clinic.repository.InMemoryPatientRepository;
+import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +15,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PatientService {
-    private final InMemoryPatientRepository repository;
+    private final PatientRepository repository;
     private final PatientMapper mapper;
 
     public List<Patient> findAll() {
@@ -32,16 +32,18 @@ public class PatientService {
                 .orElseThrow(() -> new PatientNotFoundException(email));
     }
 
+    public List<Patient> findByFragment(String fragment) {
+        return repository.searchByFragment(fragment);
+    }
+
     public Patient create(PatientCreateCommand command) {
         // Business Validation: this rule requires checking other patients,
         // so it cannot be handled by field-level validation annotations.
-        if (repository.findByEmail(command.email()).isPresent()) {
+        if (repository.existsByEmail(command.email())) {
             throw new PatientAlreadyExistsException(command.email());
         }
 
-        Patient patient = mapper.toEntity(command);
-        repository.save(patient);
-        return patient;
+        return repository.save(mapper.toEntity(command));
     }
 
     public Patient update(long id, PatientUpdateCommand command) {
@@ -50,29 +52,27 @@ public class PatientService {
         // Business Validation: this rule requires checking other patients,
         // so it cannot be handled by field-level validation annotations.
         // The patient may keep their own email, but it cannot belong to someone else.
-        boolean emailTakenByOther = repository.findByEmail(command.email())
-                .filter(owner -> owner.getId() != id)
-                .isPresent();
-        if (emailTakenByOther) {
+        if (repository.existsByEmailAndIdNot(command.email(), id)) {
             throw new PatientAlreadyExistsException(command.email());
         }
 
         mapper.update(patient, command);
-        return patient;
+        return repository.save(patient);
     }
 
     public Patient updatePassword(long id, String password) {
         return repository.findById(id)
                 .map(patient -> {
                     patient.updatePassword(password);
-                    return patient;
+                    return repository.save(patient);
                 })
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
     public void delete(long id) {
-        if (!repository.deleteById(id)) {
+        if (!repository.existsById(id)) {
             throw new PatientNotFoundException(id);
         }
+        repository.deleteById(id);
     }
 }

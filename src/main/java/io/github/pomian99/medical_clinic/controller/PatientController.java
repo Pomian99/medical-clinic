@@ -59,6 +59,12 @@ public class PatientController {
         return mapper.toDto(patientService.findByEmail(email));
     }
 
+    @Operation(summary = "Find patients by a fragment of first or last name (case-insensitive)")
+    @GetMapping(params = "fragment")
+    public List<PatientDto> getPatientsByFragment(@RequestParam String fragment) {
+        return mapper.toDto(patientService.findByFragment(fragment));
+    }
+
     @Operation(summary = "Find patient with given id")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Patient found"),
