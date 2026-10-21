@@ -59,6 +59,12 @@ public class PatientController {
         return mapper.toDto(patientService.findByEmail(email));
     }
 
+    @Operation(summary = "Find patients by a fragment of first or last name (case-insensitive)")
+    @GetMapping(params = "fragment")
+    public List<PatientDto> getPatientsByFragment(@RequestParam String fragment) {
+        return mapper.toDto(patientService.findByFragment(fragment));
+    }
+
     @Operation(summary = "Find patient with given id")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Patient found"),
@@ -117,12 +123,6 @@ public class PatientController {
                     description = "No patient with this id exists",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
-                    )),
-            @ApiResponse(
-                    responseCode = "409",
-                    description = "This email already belongs to another patient",
-                    content = @Content(
-                            schema = @Schema(implementation = ProblemDetail.class)
                     ))
     })
     @PutMapping("/{id}")
@@ -155,7 +155,7 @@ public class PatientController {
             @PathVariable long id,
             @Valid @RequestBody EditPasswordCommand command
     ) {
-        return mapper.toDto(patientService.updatePassword(id, command.password()));
+        return mapper.toDto(patientService.changePassword(id, command.password()));
     }
 
     @Operation(summary = "Delete patient with given id")
@@ -177,6 +177,6 @@ public class PatientController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePatient(@PathVariable long id) {
-        patientService.delete(id);
+        patientService.deleteById(id);
     }
 }

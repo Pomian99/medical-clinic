@@ -1,0 +1,22 @@
+info:
+  name: Assign Doctor To Missing Facility
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/doctors/1/facilities/-1"
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "404"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

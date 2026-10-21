@@ -1,0 +1,35 @@
+info:
+  name: Create Substitute User
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/users"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "pawel.kaczmarek@example.com",
+        "password": "Secret#123",
+        "role": "DOCTOR"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("substituteUserId", res.body.id);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+
+docs: The account of the substitute doctor. Account ids depend on the database, so the id is saved.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
