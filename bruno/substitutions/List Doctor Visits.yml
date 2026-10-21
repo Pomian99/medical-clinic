@@ -1,0 +1,38 @@
+info:
+  name: List Doctor Visits
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{baseUrl}}/visits?doctorId=1"
+  params:
+    - name: doctorId
+      value: "1"
+      type: query
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("both slots stay with doctor 1 after the failed substitution", function () {
+          const ids = res.getBody().map((visit) => visit.id);
+          expect(ids).to.include(bru.getVar("firstSlotId"));
+          expect(ids).to.include(bru.getVar("secondSlotId"));
+        });
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+
+docs: |-
+  The 409 rolled the whole substitution back, so the first slot, moved before the conflict
+  was found, is back with doctor 1. Without a transaction it would stay with the substitute.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

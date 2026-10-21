@@ -1,0 +1,37 @@
+info:
+  name: Create Slot
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/visits"
+  body:
+    type: json
+    data: |-
+      {
+        "doctorId": 1,
+        "startsAt": "2030-01-21T10:00:00",
+        "endsAt": "2030-01-21T10:30:00"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("slotId", res.body.id);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+
+docs: |-
+  The visits folder already makes a slot on 14 January, so the id of this one depends on
+  what ran before. It is saved here and used by the next requests instead of being hard-coded.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

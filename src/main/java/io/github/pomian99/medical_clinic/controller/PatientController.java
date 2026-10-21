@@ -161,7 +161,7 @@ public class PatientController {
             @PathVariable long id,
             @Valid @RequestBody EditPasswordCommand command
     ) {
-        return mapper.toDto(patientService.updatePassword(id, command.password()));
+        return mapper.toDto(patientService.changePassword(id, command.password()));
     }
 
     @Operation(summary = "Delete patient with given id")
@@ -183,6 +183,6 @@ public class PatientController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deletePatient(@PathVariable long id) {
-        patientService.delete(id);
+        patientService.deleteById(id);
     }
 }

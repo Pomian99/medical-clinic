@@ -15,8 +15,6 @@ public interface FacilityMapper {
 
     List<FacilityDto> toDto(List<Facility> facilities);
 
-    // A new facility has no doctors: they are assigned with POST /doctors/{id}/facilities/{facilityId}.
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "doctors", ignore = true)
     Facility toEntity(FacilityCreateCommand command);
 }

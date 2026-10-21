@@ -11,6 +11,7 @@ import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,20 +23,24 @@ public class UserService {
     private final DoctorRepository doctorRepository;
     private final UserMapper mapper;
 
+    @Transactional(readOnly = true)
     public List<User> findAll() {
         return userRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public User findById(long id) {
         return userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
     }
 
+    @Transactional(readOnly = true)
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
             .orElseThrow(() -> new UserNotFoundException(email));
     }
 
+    @Transactional
     public User create(UserCreateCommand command) {
         // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
@@ -46,6 +51,7 @@ public class UserService {
         return userRepository.save(mapper.toEntity(command));
     }
 
+    @Transactional
     public void deleteById(long id) {
         if (!userRepository.existsById(id)) {
             throw new UserNotFoundException(id);

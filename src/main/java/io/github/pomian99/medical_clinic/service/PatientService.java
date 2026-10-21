@@ -23,20 +23,24 @@ public class PatientService {
     private final UserRepository userRepository;
     private final PatientMapper mapper;
 
+    @Transactional(readOnly = true)
     public List<Patient> findAll() {
         return patientRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Patient findById(long id) {
         return patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
+    @Transactional(readOnly = true)
     public Patient findByEmail(String email) {
         return patientRepository.findByUserEmail(email)
                 .orElseThrow(() -> new PatientNotFoundException(email));
     }
 
+    @Transactional(readOnly = true)
     public List<Patient> findByFragment(String fragment) {
         return patientRepository.searchByFragment(fragment);
     }
@@ -51,11 +55,11 @@ public class PatientService {
             throw new UserAlreadyExistsException(command.email());
         }
 
-        User user = userRepository.save(User.builder()
+        User user = User.builder()
             .email(command.email())
             .password(command.password())
             .role(Role.PATIENT)
-            .build());
+            .build();
 
         Patient patient = mapper.toEntity(command);
         patient.setUser(user);
@@ -63,23 +67,26 @@ public class PatientService {
         return patientRepository.save(patient);
     }
 
+    @Transactional
     public Patient update(long id, PatientUpdateCommand command) {
         Patient patient = findById(id);
 
         mapper.update(patient, command);
-        return patientRepository.save(patient);
+        return patient;
     }
 
-    public Patient updatePassword(long id, String password) {
+    @Transactional
+    public Patient changePassword(long id, String password) {
         return patientRepository.findById(id)
                 .map(patient -> {
                     patient.updatePassword(password);
-                    return patientRepository.save(patient);
+                    return patient;
                 })
                 .orElseThrow(() -> new PatientNotFoundException(id));
     }
 
-    public void delete(long id) {
+    @Transactional
+    public void deleteById(long id) {
         if (!patientRepository.existsById(id)) {
             throw new PatientNotFoundException(id);
         }

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -24,6 +25,15 @@ public class GlobalExceptionHandler {
         log.warn("Domain error: {}", exception.getMessage());
         return ProblemDetail.forStatusAndDetail(
                 exception.getStatus(), exception.getMessage()
+        );
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ProblemDetail handleVersionConflict(ObjectOptimisticLockingFailureException exception) {
+        log.warn("Version conflict on {} with id {}", exception.getPersistentClassName(), exception.getIdentifier());
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                "The resource was changed by another request at the same time. Fetch it again and retry."
         );
     }
 

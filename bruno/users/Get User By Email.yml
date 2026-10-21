@@ -32,7 +32,6 @@ runtime:
 
 docs: |-
   Jan Wiśniewski is a patient from data.sql. His account id is saved for "Remove Patient User".
-  Jan is used rather than Anna, because the patients folder deletes patient 1 (Anna).
 
 settings:
   encodeUrl: true

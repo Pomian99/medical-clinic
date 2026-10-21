@@ -11,8 +11,8 @@ http:
     data: |-
       {
         "doctorId": 1,
-        "startsAt": "2026-12-01T09:00:00",
-        "endsAt": "2026-12-01T09:15:00"
+        "startsAt": "2030-01-14T09:00:00",
+        "endsAt": "2030-01-14T09:15:00"
       }
   auth: inherit
 

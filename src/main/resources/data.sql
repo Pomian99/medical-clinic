@@ -33,3 +33,11 @@ INSERT INTO facilities (name, city, zip_code, street, number)
 VALUES ('Przychodnia Centrum', 'Kraków', '31-001', 'Floriańska', '10'),
        ('Przychodnia Nowa Huta', 'Kraków', '31-940', 'Osiedle Centrum A', '5')
     ON CONFLICT (name) DO NOTHING;
+
+-- A doctor can be her own patient: this patient shares the doctor's account,
+-- so deleting the doctor must leave the account in place.
+INSERT INTO patients (user_id, id_card_no, first_name, last_name,
+                     phone_number, birthday)
+VALUES ((SELECT id FROM users WHERE email = 'katarzyna.wrobel@example.com'), 'KLM222333',
+        'Katarzyna', 'Wróbel', '500600703', DATE '1982-07-14')
+    ON CONFLICT (user_id) DO NOTHING;

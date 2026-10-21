@@ -5,12 +5,18 @@ info:
 
 http:
   method: GET
-  url: "{{baseUrl}}/patients?email=anna.nowak@example.com"
+  url: "{{baseUrl}}/patients?email=piotr.zielinski@example.com"
   params:
     - name: email
-      value: anna.nowak@example.com
+      value: piotr.zielinski@example.com
       type: query
   auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
 
 settings:
   encodeUrl: true
