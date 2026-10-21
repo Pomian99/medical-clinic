@@ -19,9 +19,9 @@ public interface VisitMapper {
 
     List<VisitDto> toDto(List<Visit> visits);
 
-    // The command carries only doctorId; the service loads the doctor and sets it.
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "doctor", ignore = true)
     @Mapping(target = "patient", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Visit toEntity(VisitCreateCommand command);
 }
