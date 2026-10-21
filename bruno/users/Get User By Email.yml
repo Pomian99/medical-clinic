@@ -1,0 +1,42 @@
+info:
+  name: Get User By Email
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{baseUrl}}/users?email=jan.wisniewski@example.com"
+  params:
+    - name: email
+      value: jan.wisniewski@example.com
+      type: query
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.role
+      operator: eq
+      value: PATIENT
+  actions:
+    - type: set-variable
+      phase: after-response
+      selector:
+        expression: res.body.id
+        method: jsonq
+      variable:
+        name: patientUserId
+        scope: runtime
+
+docs: |-
+  Jan Wiśniewski is a patient from data.sql. His account id is saved for "Remove Patient User".
+  Jan is used rather than Anna, because the patients folder deletes patient 1 (Anna).
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
