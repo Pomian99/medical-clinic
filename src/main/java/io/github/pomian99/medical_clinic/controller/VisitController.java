@@ -1,5 +1,6 @@
 package io.github.pomian99.medical_clinic.controller;
 
+import io.github.pomian99.medical_clinic.dto.PageResponse;
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
 import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.mapper.VisitMapper;
@@ -12,7 +13,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -43,10 +43,10 @@ public class VisitController {
             + "Without them: first page of 20 visits, sorted by startsAt, then id."
     )
     @GetMapping
-    public Page<VisitDto> getVisits(
+    public PageResponse<VisitDto> getVisits(
         @PageableDefault(size = 20, sort = {"startsAt", "id"}) Pageable pageable
     ) {
-        return visitService.findAll(pageable).map(mapper::toDto);
+        return PageResponse.from(visitService.findAll(pageable).map(mapper::toDto));
     }
 
     @Operation(
