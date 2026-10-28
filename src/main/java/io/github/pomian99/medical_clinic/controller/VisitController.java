@@ -12,6 +12,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +38,18 @@ public class VisitController {
     private final VisitMapper mapper;
 
     @Operation(
+        summary = "List all visits page by page",
+        description = "Query parameters page (from 0), size and sort, e.g. ?page=1&size=5&sort=startsAt,desc. "
+            + "Without them: first page of 20 visits, sorted by startsAt, then id."
+    )
+    @GetMapping
+    public Page<VisitDto> getVisits(
+        @PageableDefault(size = 20, sort = {"startsAt", "id"}) Pageable pageable
+    ) {
+        return visitService.findAll(pageable).map(mapper::toDto);
+    }
+
+    @Operation(
             summary = "List visits of doctor with given id",
             description = "Returns both free slots and booked visits. "
                     + "A doctor without visits, or an unknown doctor id, gives an empty list."
@@ -43,12 +58,12 @@ public class VisitController {
             @ApiResponse(responseCode = "200", description = "Visits of the doctor"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "The doctorId parameter is missing or is not a number",
+                    description = "The doctorId parameter is not a number",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))
     })
-    @GetMapping
+    @GetMapping(params = "doctorId")
     public List<VisitDto> getVisitsByDoctorId(@RequestParam long doctorId) {
         return mapper.toDto(visitService.findAllByDoctorId(doctorId));
     }

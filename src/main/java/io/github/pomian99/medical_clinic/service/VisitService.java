@@ -16,6 +16,8 @@ import io.github.pomian99.medical_clinic.repository.DoctorRepository;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,6 +92,11 @@ public class VisitService {
             visit.setDoctor(substitute);
         }
         return visits;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Visit> findAll(Pageable pageable) {
+        return visitRepository.findAll(pageable);
     }
 
     @Transactional(readOnly = true)
