@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PatientTest {
@@ -40,5 +41,22 @@ class PatientTest {
         // then
         assertTrue(equal);
         assertEquals(first.hashCode(), second.hashCode());
+    }
+
+    @Test
+    void equals_noIdSameFirstName_patientsAreNotEqual() {
+        // given
+        Patient first = Patient.builder()
+            .firstName("Jan")
+            .build();
+        Patient second = Patient.builder()
+            .firstName("Jan")
+            .build();
+
+        // when
+        boolean equal = first.equals(second);
+
+        // then
+        assertFalse(equal);
     }
 }
