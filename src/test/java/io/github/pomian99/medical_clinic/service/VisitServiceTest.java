@@ -2,6 +2,7 @@ package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
 import io.github.pomian99.medical_clinic.exception.DoctorNotFoundException;
+import io.github.pomian99.medical_clinic.exception.InvalidSortPropertyException;
 import io.github.pomian99.medical_clinic.exception.InvalidVisitException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.VisitAlreadyBookedException;
@@ -21,10 +22,15 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -300,5 +306,38 @@ class VisitServiceTest {
         // then
         assertEquals("Visit with id 1 is already booked", exception.getMessage());
         assertSame(bookedPatient, visit.getPatient());
+    }
+
+    @Test
+    void findAll_allowedSort_returnsRepositoryPage() {
+        // given
+        PageRequest pageable = PageRequest.of(1, 5, Sort.by("startsAt").descending());
+        Page<Visit> page = new PageImpl<>(List.of(Visit.builder().id(6L).build()), pageable, 12);
+        when(visitRepository.findAll(pageable)).thenReturn(page);
+
+        // when
+        Page<Visit> result = visitService.findAll(pageable);
+
+        // then
+        assertSame(page, result);
+    }
+
+    @Test
+    void findAll_sortNotAllowed_throwsInvalidSortProperty() {
+        // given
+        PageRequest pageable = PageRequest.of(0, 20, Sort.by("patient.user.password"));
+
+        // when
+        InvalidSortPropertyException exception = assertThrows(
+            InvalidSortPropertyException.class,
+            () -> visitService.findAll(pageable)
+        );
+
+        // then
+        assertEquals(
+            "Cannot sort by 'patient.user.password', allowed: startsAt, endsAt, id",
+            exception.getMessage()
+        );
+        verify(visitRepository, never()).findAll(any(PageRequest.class));
     }
 }
