@@ -1,0 +1,35 @@
+info:
+  name: Page 0 Of 5
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/visits?page=0&size=5"
+  params:
+    - name: page
+      value: "0"
+      type: query
+    - name: size
+      value: "5"
+      type: query
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.page
+      operator: eq
+      value: "0"
+    - expression: res.body.size
+      operator: eq
+      value: "5"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
