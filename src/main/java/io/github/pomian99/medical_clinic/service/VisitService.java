@@ -3,6 +3,7 @@ package io.github.pomian99.medical_clinic.service;
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
 import io.github.pomian99.medical_clinic.exception.DoctorNotFoundException;
 import io.github.pomian99.medical_clinic.exception.InvalidSubstitutionException;
+import io.github.pomian99.medical_clinic.exception.InvalidSortPropertyException;
 import io.github.pomian99.medical_clinic.exception.InvalidVisitException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.VisitAlreadyBookedException;
@@ -18,6 +19,7 @@ import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VisitService {
     private static final Duration SLOT = Duration.ofMinutes(15);
+    private static final List<String> SORTABLE_PROPERTIES = List.of("startsAt", "endsAt", "id");
 
     private final VisitRepository visitRepository;
     private final DoctorRepository doctorRepository;
@@ -96,6 +99,7 @@ public class VisitService {
 
     @Transactional(readOnly = true)
     public Page<Visit> findAll(Pageable pageable) {
+        validateSort(pageable.getSort());
         return visitRepository.findAll(pageable);
     }
 
@@ -124,6 +128,14 @@ public class VisitService {
         boolean wholeSlots = length.toSeconds() % SLOT.toSeconds() == 0 && length.toNanosPart() == 0;
         if (length.isNegative() || length.isZero() || !wholeSlots) {
             throw new InvalidVisitException("Visit length must be a positive multiple of 15 minutes");
+        }
+    }
+
+    private void validateSort(Sort sort) {
+        for (Sort.Order order : sort) {
+            if (!SORTABLE_PROPERTIES.contains(order.getProperty())) {
+                throw new InvalidSortPropertyException(order.getProperty(), SORTABLE_PROPERTIES);
+            }
         }
     }
 }
