@@ -1,8 +1,10 @@
 package io.github.pomian99.medical_clinic.controller;
 
+import io.github.pomian99.medical_clinic.dto.BookingSummaryDto;
 import io.github.pomian99.medical_clinic.dto.PageResponse;
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
 import io.github.pomian99.medical_clinic.dto.VisitDto;
+import io.github.pomian99.medical_clinic.facade.VisitBookingFacade;
 import io.github.pomian99.medical_clinic.mapper.VisitMapper;
 import io.github.pomian99.medical_clinic.service.VisitService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,6 +37,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VisitController {
     private final VisitService visitService;
+    private final VisitBookingFacade bookingFacade;
     private final VisitMapper mapper;
 
     @Operation(
@@ -124,7 +127,7 @@ public class VisitController {
             description = "Assigns the patient to a free slot that has not started yet."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Visit booked"),
+            @ApiResponse(responseCode = "200", description = "Visit booked, booking summary returned"),
             @ApiResponse(
                     responseCode = "400",
                     description = "The visit is in the past, or an id in the path is not a number",
@@ -145,7 +148,7 @@ public class VisitController {
                     ))
     })
     @PatchMapping("/{id}/book/{patientId}")
-    public VisitDto bookVisit(@PathVariable long id, @PathVariable long patientId) {
-        return mapper.toDto(visitService.book(id, patientId));
+    public BookingSummaryDto bookVisit(@PathVariable long id, @PathVariable long patientId) {
+        return bookingFacade.book(id, patientId);
     }
 }
