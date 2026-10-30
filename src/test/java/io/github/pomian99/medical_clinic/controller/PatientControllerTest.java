@@ -101,6 +101,7 @@ class PatientControllerTest {
             .andExpect(jsonPath("$.email").value("jankow@poczta.pl"))
             .andExpect(jsonPath("$.firstName").value("Jan"))
             .andExpect(jsonPath("$.lastName").value("Kowalski"))
+            .andExpect(jsonPath("$.fullName").value("Jan Kowalski"))
             .andExpect(jsonPath("$.idCardNo").doesNotExist());
     }
 

@@ -8,6 +8,7 @@ public record PatientDto(
         String firstName,
         String lastName,
         String phoneNumber,
-        LocalDate birthday
+        LocalDate birthday,
+        String fullName
 ) {
 }
