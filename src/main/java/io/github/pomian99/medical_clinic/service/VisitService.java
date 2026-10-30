@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -111,6 +112,11 @@ public class VisitService {
     @Transactional(readOnly = true)
     public List<Visit> findAllByPatientId(long id) {
         return visitRepository.findAllByPatientId(id);
+    }
+
+    @Transactional(readOnly = true)
+    public long countFreeSlots(Long doctorId, LocalDate day) {
+        return visitRepository.countFreeSlots(doctorId, day.atStartOfDay(), day.plusDays(1).atStartOfDay());
     }
 
     private boolean isPast(LocalDateTime time) {
