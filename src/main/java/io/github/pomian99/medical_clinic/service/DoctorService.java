@@ -17,6 +17,7 @@ import io.github.pomian99.medical_clinic.repository.FacilityRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DoctorService {
     private final DoctorRepository doctorRepository;
     private final UserRepository userRepository;
@@ -65,7 +67,9 @@ public class DoctorService {
         Doctor doctor = mapper.toEntity(command);
         doctor.setUser(user);
 
-        return doctorRepository.save(doctor);
+        Doctor saved = doctorRepository.save(doctor);
+        log.info("Created doctor {} for user {}", saved.getId(), user.getId());
+        return saved;
     }
 
     @Transactional
@@ -79,6 +83,7 @@ public class DoctorService {
             throw new DoctorHasVisitsException(id);
         }
         doctorRepository.deleteById(id);
+        log.info("Deleted doctor {}", id);
     }
 
     @Transactional
@@ -87,6 +92,7 @@ public class DoctorService {
         Facility facility = facilityRepository.findById(facilityId)
             .orElseThrow(() -> new FacilityNotFoundException(facilityId));
         doctor.addFacility(facility);
+        log.info("Assigned facility {} to doctor {}", facilityId, doctorId);
         return doctor;
     }
 
@@ -96,6 +102,7 @@ public class DoctorService {
         Facility facility = facilityRepository.findById(facilityId)
             .orElseThrow(() -> new FacilityNotFoundException(facilityId));
         doctor.removeFacility(facility);
+        log.info("Removed facility {} from doctor {}", facilityId, doctorId);
         return doctor;
     }
 }
