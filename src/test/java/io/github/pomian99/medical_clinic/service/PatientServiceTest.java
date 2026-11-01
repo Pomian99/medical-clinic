@@ -197,6 +197,7 @@ class PatientServiceTest {
             .build();
         when(userRepository.existsByEmail("jankow@poczta.pl")).thenReturn(false);
         when(mapper.toEntity(command)).thenReturn(patient);
+        when(patientRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         ArgumentCaptor<Patient> captor = ArgumentCaptor.forClass(Patient.class);
 
         // when

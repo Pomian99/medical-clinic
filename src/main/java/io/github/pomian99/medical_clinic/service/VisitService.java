@@ -17,6 +17,7 @@ import io.github.pomian99.medical_clinic.repository.DoctorRepository;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -31,6 +32,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class VisitService {
     private static final Duration SLOT = Duration.ofMinutes(15);
     private static final List<String> SORTABLE_PROPERTIES = List.of("startsAt", "endsAt", "id");
@@ -48,6 +50,7 @@ public class VisitService {
         Doctor doctor = doctorRepository.findById(command.doctorId())
                 .orElseThrow(() -> new DoctorNotFoundException(command.doctorId()));
 
+        log.debug("Checking overlap for doctor {}: {} - {}", command.doctorId(), command.startsAt(), command.endsAt());
         if (visitRepository.existsByDoctorIdAndStartsAtBeforeAndEndsAtAfter(command.doctorId(), command.endsAt(), command.startsAt())) {
             throw new VisitOverlapsException(command.doctorId(), command.startsAt(), command.endsAt());
         }
@@ -56,7 +59,9 @@ public class VisitService {
         Visit visit = mapper.toEntity(command);
         visit.setDoctor(doctor);
 
-        return visitRepository.save(visit);
+        Visit saved = visitRepository.save(visit);
+        log.info("Created visit {} for doctor {}: {} - {}", saved.getId(), doctor.getId(), saved.getStartsAt(), saved.getEndsAt());
+        return saved;
     }
 
     @Transactional
@@ -74,6 +79,7 @@ public class VisitService {
         }
 
         visit.setPatient(patient);
+        log.info("Booked visit {} for patient {}", visitId, patientId);
         return visit;
     }
 
@@ -95,6 +101,7 @@ public class VisitService {
             }
             visit.setDoctor(substitute);
         }
+        log.info("Moved {} visits from doctor {} to doctor {}", visits.size(), doctorId, substituteId);
         return visits;
     }
 
@@ -116,7 +123,9 @@ public class VisitService {
 
     @Transactional(readOnly = true)
     public long countFreeSlots(Long doctorId, LocalDate day) {
-        return visitRepository.countFreeSlots(doctorId, day.atStartOfDay(), day.plusDays(1).atStartOfDay());
+        long freeSlots = visitRepository.countFreeSlots(doctorId, day.atStartOfDay(), day.plusDays(1).atStartOfDay());
+        log.debug("Doctor {} has {} free slots on {}", doctorId, freeSlots, day);
+        return freeSlots;
     }
 
     private boolean isPast(LocalDateTime time) {

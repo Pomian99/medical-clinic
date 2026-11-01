@@ -78,6 +78,7 @@ class VisitServiceTest {
         when(doctorRepository.findById(1L)).thenReturn(Optional.of(doctor));
         when(visitRepository.existsByDoctorIdAndStartsAtBeforeAndEndsAtAfter(1L, NOW.plusMinutes(30), NOW))
             .thenReturn(false);
+        when(visitRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         ArgumentCaptor<Visit> captor = ArgumentCaptor.forClass(Visit.class);
 
         // when
