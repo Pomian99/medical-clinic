@@ -10,6 +10,7 @@ import io.github.pomian99.medical_clinic.repository.DoctorRepository;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
@@ -48,7 +50,9 @@ public class UserService {
             throw new UserAlreadyExistsException(command.email());
         }
 
-        return userRepository.save(mapper.toEntity(command));
+        User saved = userRepository.save(mapper.toEntity(command));
+        log.info("Created user {}", saved.getId());
+        return saved;
     }
 
     @Transactional
@@ -60,5 +64,6 @@ public class UserService {
             throw new UserInUseException(id);
         }
         userRepository.deleteById(id);
+        log.info("Deleted user {}", id);
     }
 }

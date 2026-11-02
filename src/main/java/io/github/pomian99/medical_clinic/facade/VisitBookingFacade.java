@@ -11,11 +11,13 @@ import io.github.pomian99.medical_clinic.service.DoctorService;
 import io.github.pomian99.medical_clinic.service.PatientService;
 import io.github.pomian99.medical_clinic.service.VisitService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class VisitBookingFacade {
     private final VisitService visitService;
     private final PatientService patientService;
@@ -30,6 +32,7 @@ public class VisitBookingFacade {
         Patient patient = patientService.findById(patientId);
         Doctor doctor = doctorService.findById(visit.getDoctor().getId());
         long freeSlots = visitService.countFreeSlots(doctor.getId(), visit.getStartsAt().toLocalDate());
+        log.debug("Built booking summary for visit {} and doctor {}", visit.getId(), doctor.getId());
         return new BookingSummaryDto(
             visitMapper.toDto(visit),
             patientMapper.toDto(patient),
