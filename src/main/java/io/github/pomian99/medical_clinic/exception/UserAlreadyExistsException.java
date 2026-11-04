@@ -3,9 +3,9 @@ package io.github.pomian99.medical_clinic.exception;
 import org.springframework.http.HttpStatus;
 
 public class UserAlreadyExistsException extends MedicalClinicException {
-    public UserAlreadyExistsException(String email) {
+    public UserAlreadyExistsException() {
         super(
-                String.format("User with email %s already exists", email),
+                "User with this email already exists",
                 HttpStatus.CONFLICT
         );
     }

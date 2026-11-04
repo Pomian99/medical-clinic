@@ -39,7 +39,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
-            .orElseThrow(() -> new UserNotFoundException(email));
+            .orElseThrow(UserNotFoundException::new);
     }
 
     @Transactional
@@ -47,7 +47,7 @@ public class UserService {
         // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
         if (userRepository.existsByEmail(command.email())) {
-            throw new UserAlreadyExistsException(command.email());
+            throw new UserAlreadyExistsException();
         }
 
         User saved = userRepository.save(mapper.toEntity(command));

@@ -130,7 +130,7 @@ class PatientServiceTest {
         );
 
         // then
-        assertEquals("Patient with email jankow@poczta.pl not found", exception.getMessage());
+        assertEquals("Patient with this email not found", exception.getMessage());
     }
 
     @Test
@@ -232,7 +232,7 @@ class PatientServiceTest {
         );
 
         // then
-        assertEquals("User with email jankow@poczta.pl already exists", exception.getMessage());
+        assertEquals("User with this email already exists", exception.getMessage());
         verify(patientRepository, never()).save(any());
     }
 

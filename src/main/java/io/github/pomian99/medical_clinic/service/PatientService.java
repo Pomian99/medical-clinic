@@ -39,7 +39,7 @@ public class PatientService {
     @Transactional(readOnly = true)
     public Patient findByEmail(String email) {
         return patientRepository.findByUserEmail(email)
-                .orElseThrow(() -> new PatientNotFoundException(email));
+                .orElseThrow(PatientNotFoundException::new);
     }
 
     @Transactional(readOnly = true)
@@ -54,7 +54,7 @@ public class PatientService {
         // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
         if (userRepository.existsByEmail(command.email())) {
-            throw new UserAlreadyExistsException(command.email());
+            throw new UserAlreadyExistsException();
         }
 
         User user = User.builder()

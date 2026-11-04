@@ -198,7 +198,7 @@ class PatientControllerTest {
     @Test
     void createPatient_emailTaken_returnsConflict() throws Exception {
         // given
-        when(patientService.create(any())).thenThrow(new UserAlreadyExistsException("jankow@poczta.pl"));
+        when(patientService.create(any())).thenThrow(new UserAlreadyExistsException());
 
         // when
         var result = mockMvc.perform(post("/patients")
@@ -207,7 +207,7 @@ class PatientControllerTest {
 
         // then
         result.andExpect(status().isConflict())
-            .andExpect(jsonPath("$.detail").value("User with email jankow@poczta.pl already exists"));
+            .andExpect(jsonPath("$.detail").value("User with this email already exists"));
     }
 
     @Test
