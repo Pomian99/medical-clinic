@@ -1,5 +1,6 @@
 package io.github.pomian99.medical_clinic.controller;
 
+import io.github.pomian99.medical_clinic.config.SecurityConfig;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
 import io.github.pomian99.medical_clinic.mapper.PatientMapperImpl;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -32,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PatientController.class)
-@Import(PatientMapperImpl.class)
+@Import({PatientMapperImpl.class, SecurityConfig.class})
 class PatientControllerTest {
 
     // Meets every rule of PatientCreateCommand.
@@ -55,6 +57,7 @@ class PatientControllerTest {
     PatientService patientService;
 
     @Test
+    @WithMockUser
     void getPatients_twoPatientsExist_returnsBoth() throws Exception {
         // given
         Patient jan = Patient.builder()
@@ -77,6 +80,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getPatientById_patientExists_returnsPatientWithoutIdCardNo() throws Exception {
         // given
         Patient patient = Patient.builder()
@@ -106,6 +110,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getPatientById_patientNotFound_returnsNotFound() throws Exception {
         // given
         when(patientService.findById(1L)).thenThrow(new PatientNotFoundException(1L));
@@ -119,6 +124,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getPatientById_idNotANumber_returnsBadRequest() throws Exception {
         // when
         var result = mockMvc.perform(get("/patients/abc"));
@@ -129,6 +135,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getPatientById_unexpectedError_returnsInternalErrorWithoutDetails() throws Exception {
         // given
         when(patientService.findById(1L)).thenThrow(new IllegalStateException("Connection pool exhausted"));
@@ -224,6 +231,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @WithMockUser
     void deletePatient_patientExists_returnsNoContent() throws Exception {
         // when
         var result = mockMvc.perform(delete("/patients/1"));
@@ -234,6 +242,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @WithMockUser
     void deletePatient_patientNotFound_returnsNotFound() throws Exception {
         // given
         doThrow(new PatientNotFoundException(1L)).when(patientService).deleteById(1L);
@@ -247,6 +256,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @WithMockUser
     void deletePatients_noId_returnsMethodNotAllowed() throws Exception {
         // when
         var result = mockMvc.perform(delete("/patients"));

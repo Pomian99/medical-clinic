@@ -1,5 +1,6 @@
 package io.github.pomian99.medical_clinic.controller;
 
+import io.github.pomian99.medical_clinic.config.SecurityConfig;
 import io.github.pomian99.medical_clinic.dto.BookingSummaryDto;
 import io.github.pomian99.medical_clinic.dto.DoctorDto;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -28,7 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(VisitController.class)
-@Import(VisitMapperImpl.class)
+@Import({VisitMapperImpl.class, SecurityConfig.class})
+@WithMockUser
 class VisitControllerTest {
 
     @Autowired

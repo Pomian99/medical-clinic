@@ -1,10 +1,15 @@
 -- Runs on every application start, so every insert must be safe to repeat.
 
 -- Accounts go first: every patient points to one through user_id.
+-- Passwords are stored as BCrypt hashes, because PasswordEncoder compares the login against a hash.
+-- Demo passwords: anna Silne123!, jan Silne456!, ewa Silne789!, katarzyna Silne321!.
 INSERT INTO users (email, password, role)
-VALUES ('anna.nowak@example.com', 'Silne123!', 'PATIENT'),
-       ('jan.wisniewski@example.com', 'Silne456!', 'PATIENT'),
-       ('ewa.kowalczyk@example.com', 'Silne789!', 'PATIENT')
+VALUES ('anna.nowak@example.com',
+        '$2a$10$ugNVXbrfGq7DuRcIGmblvOgokrnHxSzP3EAuelTV9XC4CFIbQM.ii', 'PATIENT'),
+       ('jan.wisniewski@example.com',
+        '$2a$10$B9emrRA26VAQI1VnQO4UeetqshR7.CM4bfhRsWVAPTamVlBg.e.dO', 'PATIENT'),
+       ('ewa.kowalczyk@example.com',
+        '$2a$10$xkB9fC8n1bvQI0dH2W0olO5s/JvZ6ZhKqUWwQLddi5LdkvgpU2raC', 'PATIENT')
     ON CONFLICT (email) DO NOTHING;
 
 -- Account ids are generated, so each patient looks its account up by e-mail.
@@ -20,7 +25,8 @@ VALUES ((SELECT id FROM users WHERE email = 'anna.nowak@example.com'), 'ABC12345
 
 -- A doctor works the same way: the account first, then the doctor on that account.
 INSERT INTO users (email, password, role)
-VALUES ('katarzyna.wrobel@example.com', 'Silne321!', 'DOCTOR')
+VALUES ('katarzyna.wrobel@example.com',
+        '$2a$10$ik7.s2PQHd0VCiOXsmc6Gu0sIlwpX0lqXMUQIbPBMO1mjTVfJQH8y', 'DOCTOR')
     ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO doctors (user_id, first_name, last_name, specialization)
