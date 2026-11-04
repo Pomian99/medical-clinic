@@ -12,6 +12,7 @@ import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
     private final PatientMapper mapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public List<Patient> findAll() {
@@ -59,7 +61,7 @@ public class PatientService {
 
         User user = User.builder()
             .email(command.email())
-            .password(command.password())
+            .password(passwordEncoder.encode(command.password()))
             .role(Role.PATIENT)
             .build();
 
