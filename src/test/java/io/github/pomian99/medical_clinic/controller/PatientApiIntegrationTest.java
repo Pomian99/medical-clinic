@@ -4,8 +4,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,7 +43,11 @@ class PatientApiIntegrationTest {
             .andExpect(status().isCreated());
 
         // when
-        var result = mockMvc.perform(get("/patients").param("email", "anna.nowak@poczta.pl"));
+        String credentials = Base64.getEncoder().encodeToString(
+            "anna.nowak@poczta.pl:Secret123!".getBytes(StandardCharsets.UTF_8));
+        var result = mockMvc.perform(get("/patients")
+            .param("email", "anna.nowak@poczta.pl")
+            .header(HttpHeaders.AUTHORIZATION, "Basic " + credentials));
 
         // then
         result.andExpect(status().isOk())

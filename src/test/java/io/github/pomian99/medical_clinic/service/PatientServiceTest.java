@@ -16,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -41,6 +42,9 @@ class PatientServiceTest {
 
     @Mock
     PatientMapper mapper;
+
+    @Mock
+    PasswordEncoder passwordEncoder;
 
     @InjectMocks
     PatientService patientService;
@@ -169,13 +173,14 @@ class PatientServiceTest {
         when(userRepository.existsByEmail("jankow@poczta.pl")).thenReturn(false);
         when(mapper.toEntity(command)).thenReturn(patient);
         when(patientRepository.save(patient)).thenReturn(patient);
+        when(passwordEncoder.encode("Secret123!")).thenReturn("hash-Secret123!");
 
         // when
         Patient result = patientService.create(command);
 
         // then
         assertEquals("jankow@poczta.pl", result.getUser().getEmail());
-        assertEquals("Secret123!", result.getUser().getPassword());
+        assertEquals("hash-Secret123!", result.getUser().getPassword());
         assertEquals(Role.PATIENT, result.getUser().getRole());
     }
 
