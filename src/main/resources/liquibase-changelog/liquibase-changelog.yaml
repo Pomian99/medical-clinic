@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - include:
+      file: versions/001-initial.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: versions/002-enum-checks.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: versions/003-visits-patient-id-index.yaml
+      relativeToChangelogFile: true
+
+# Known gap: the database does not stop two visits of the same doctor from overlapping.
+# There is no constraint on visits for it, not even a unique (doctor_id, starts_at), so a direct
+# INSERT can save any overlap. Only VisitService checks it (create and substitute), and two
+# concurrent requests can both pass that check. A PostgreSQL exclusion constraint on the
+# doctor's time range would make it a real guarantee.
