@@ -11,6 +11,7 @@ import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ public class UserService {
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final UserMapper mapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public List<User> findAll() {
@@ -50,7 +52,10 @@ public class UserService {
             throw new UserAlreadyExistsException();
         }
 
-        User saved = userRepository.save(mapper.toEntity(command));
+        User user = mapper.toEntity(command);
+        user.updatePassword(passwordEncoder.encode(command.password()));
+
+        User saved = userRepository.save(user);
         log.info("Created user {}", saved.getId());
         return saved;
     }

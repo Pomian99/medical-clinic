@@ -86,7 +86,7 @@ public class PatientService {
     public Patient changePassword(long id, String password) {
         return patientRepository.findById(id)
                 .map(patient -> {
-                    patient.updatePassword(password);
+                    patient.updatePassword(passwordEncoder.encode(password));
                     log.info("Changed password of patient {}", id);
                     return patient;
                 })

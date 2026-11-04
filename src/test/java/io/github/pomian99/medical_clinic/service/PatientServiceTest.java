@@ -299,12 +299,13 @@ class PatientServiceTest {
             )
             .build();
         when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        when(passwordEncoder.encode("NewSecret123!")).thenReturn("hash-NewSecret123!");
 
         // when
         Patient result = patientService.changePassword(1L, "NewSecret123!");
 
         // then
-        assertEquals("NewSecret123!", result.getUser().getPassword());
+        assertEquals("hash-NewSecret123!", result.getUser().getPassword());
     }
 
     @Test
