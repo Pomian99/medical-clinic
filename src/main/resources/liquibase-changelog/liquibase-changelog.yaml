@@ -8,6 +8,9 @@ databaseChangeLog:
   - include:
       file: versions/003-visits-patient-id-index.yaml
       relativeToChangelogFile: true
+  - include:
+      file: versions/004-admin.yaml
+      relativeToChangelogFile: true
 
 # Known gap: the database does not stop two visits of the same doctor from overlapping.
 # There is no constraint on visits for it, not even a unique (doctor_id, starts_at), so a direct
