@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: "21"
+      id: "20"
       author: kursant
       changes:
         - sql:
@@ -17,7 +17,7 @@ databaseChangeLog:
               ALTER TABLE users ADD CONSTRAINT users_role_check
               CHECK (role IN ('PATIENT', 'DOCTOR'))
   - changeSet:
-      id: "22"
+      id: "21"
       author: kursant
       # Demo admin account, password: admin. Only the BCrypt hash goes to the repository.
       changes:
