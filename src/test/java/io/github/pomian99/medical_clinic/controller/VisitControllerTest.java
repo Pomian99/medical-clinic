@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(VisitController.class)
 @Import({VisitMapperImpl.class, SecurityConfig.class})
-@WithMockUser
+@WithMockUser(roles = "PATIENT")
 class VisitControllerTest {
 
     @Autowired

@@ -24,7 +24,7 @@ class PatientApiIntegrationTest {
     MockMvc mockMvc;
 
     @Test
-    void createPatient_thenGetByEmail_findsNewPatient() throws Exception {
+    void createPatient_thenGetByEmail_forbiddenForPatientAdminFindsNewPatient() throws Exception {
         // given
         String body = """
             {
@@ -43,16 +43,23 @@ class PatientApiIntegrationTest {
             .andExpect(status().isCreated());
 
         // when
-        String credentials = Base64.getEncoder().encodeToString(
-            "anna.nowak@poczta.pl:Secret123!".getBytes(StandardCharsets.UTF_8));
-        var result = mockMvc.perform(get("/patients")
+        var asPatient = mockMvc.perform(get("/patients")
             .param("email", "anna.nowak@poczta.pl")
-            .header(HttpHeaders.AUTHORIZATION, "Basic " + credentials));
+            .header(HttpHeaders.AUTHORIZATION, basic("anna.nowak@poczta.pl:Secret123!")));
+        var asAdmin = mockMvc.perform(get("/patients")
+            .param("email", "anna.nowak@poczta.pl")
+            .header(HttpHeaders.AUTHORIZATION, basic("admin:admin")));
 
         // then
-        result.andExpect(status().isOk())
+        asPatient.andExpect(status().isForbidden());
+        asAdmin.andExpect(status().isOk())
             .andExpect(jsonPath("$.email").value("anna.nowak@poczta.pl"))
             .andExpect(jsonPath("$.firstName").value("Anna"))
             .andExpect(jsonPath("$.lastName").value("Nowak"));
+    }
+
+    private static String basic(String emailAndPassword) {
+        return "Basic " + Base64.getEncoder().encodeToString(
+            emailAndPassword.getBytes(StandardCharsets.UTF_8));
     }
 }
