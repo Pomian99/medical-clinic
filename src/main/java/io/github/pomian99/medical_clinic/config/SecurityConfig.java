@@ -21,7 +21,12 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/patients").anonymous()
-                .anyRequest().authenticated())
+                .requestMatchers(HttpMethod.GET, "/patients").hasRole("ADMIN")
+                .requestMatchers("/users/**").hasRole("ADMIN")
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/visits").hasRole("ADMIN")
+                .requestMatchers("/patients/**", "/doctors/**", "/facilities/**", "/visits/**").hasRole("PATIENT")
+                .anyRequest().denyAll())
             .httpBasic(Customizer.withDefaults());
         return http.build();
     }

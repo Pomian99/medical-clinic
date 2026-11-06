@@ -57,7 +57,7 @@ class PatientControllerTest {
     PatientService patientService;
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void getPatients_twoPatientsExist_returnsBoth() throws Exception {
         // given
         Patient jan = Patient.builder()
@@ -80,7 +80,7 @@ class PatientControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "PATIENT")
     void getPatientById_patientExists_returnsPatientWithoutIdCardNo() throws Exception {
         // given
         Patient patient = Patient.builder()
@@ -110,7 +110,7 @@ class PatientControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "PATIENT")
     void getPatientById_patientNotFound_returnsNotFound() throws Exception {
         // given
         when(patientService.findById(1L)).thenThrow(new PatientNotFoundException(1L));
@@ -124,7 +124,7 @@ class PatientControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "PATIENT")
     void getPatientById_idNotANumber_returnsBadRequest() throws Exception {
         // when
         var result = mockMvc.perform(get("/patients/abc"));
@@ -135,7 +135,7 @@ class PatientControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "PATIENT")
     void getPatientById_unexpectedError_returnsInternalErrorWithoutDetails() throws Exception {
         // given
         when(patientService.findById(1L)).thenThrow(new IllegalStateException("Connection pool exhausted"));
@@ -231,7 +231,7 @@ class PatientControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "PATIENT")
     void deletePatient_patientExists_returnsNoContent() throws Exception {
         // when
         var result = mockMvc.perform(delete("/patients/1"));
@@ -242,7 +242,7 @@ class PatientControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "PATIENT")
     void deletePatient_patientNotFound_returnsNotFound() throws Exception {
         // given
         doThrow(new PatientNotFoundException(1L)).when(patientService).deleteById(1L);
@@ -256,7 +256,7 @@ class PatientControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "PATIENT")
     void deletePatients_noId_returnsMethodNotAllowed() throws Exception {
         // when
         var result = mockMvc.perform(delete("/patients"));
