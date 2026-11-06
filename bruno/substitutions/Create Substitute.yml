@@ -15,7 +15,10 @@ http:
         "lastName": "Kaczmarek",
         "specialization": "CARDIOLOGIST"
       }
-  auth: inherit
+  auth:
+    type: basic
+    username: "{{adminEmail}}"
+    password: "{{adminPassword}}"
 
 runtime:
   scripts:

@@ -4,4 +4,7 @@ info:
   seq: 2
 
 request:
-  auth: inherit
+  auth:
+    type: basic
+    username: "{{adminEmail}}"
+    password: "{{adminPassword}}"

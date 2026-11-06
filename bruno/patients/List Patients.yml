@@ -6,7 +6,10 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/patients"
-  auth: inherit
+  auth:
+    type: basic
+    username: "{{adminEmail}}"
+    password: "{{adminPassword}}"
 
 runtime:
   assertions:

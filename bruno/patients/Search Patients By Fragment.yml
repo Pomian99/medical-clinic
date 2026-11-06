@@ -10,7 +10,10 @@ http:
     - name: fragment
       value: KOW
       type: query
-  auth: inherit
+  auth:
+    type: basic
+    username: "{{adminEmail}}"
+    password: "{{adminPassword}}"
 
 runtime:
   assertions:

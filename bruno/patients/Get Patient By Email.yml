@@ -10,7 +10,10 @@ http:
     - name: email
       value: piotr.zielinski@example.com
       type: query
-  auth: inherit
+  auth:
+    type: basic
+    username: "{{adminEmail}}"
+    password: "{{adminPassword}}"
 
 runtime:
   assertions:

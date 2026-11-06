@@ -13,7 +13,10 @@ http:
         "name": "Przychodnia Centrum",
         "city": "Kraków"
       }
-  auth: inherit
+  auth:
+    type: basic
+    username: "{{adminEmail}}"
+    password: "{{adminPassword}}"
 
 runtime:
   assertions:

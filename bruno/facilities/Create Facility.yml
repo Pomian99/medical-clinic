@@ -16,7 +16,10 @@ http:
         "street": "Królewska",
         "number": "20"
       }
-  auth: inherit
+  auth:
+    type: basic
+    username: "{{adminEmail}}"
+    password: "{{adminPassword}}"
 
 runtime:
   scripts:
