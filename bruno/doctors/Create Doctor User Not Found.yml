@@ -15,7 +15,9 @@ http:
         "lastName": "Mazur",
         "specialization": "PEDIATRICIAN"
       }
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{adminToken}}"
 
 runtime:
   assertions:

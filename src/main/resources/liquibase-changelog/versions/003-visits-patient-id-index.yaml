@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: "19"
+      author: kursant
+      changes:
+        - createIndex:
+            tableName: visits
+            indexName: idx_visits_patient_id
+            columns:
+              - column:
+                  name: patient_id
+      rollback:
+        - dropIndex:
+            tableName: visits
+            indexName: idx_visits_patient_id

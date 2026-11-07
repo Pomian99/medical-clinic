@@ -1,7 +1,10 @@
 package io.github.pomian99.medical_clinic.controller;
 
+import io.github.pomian99.medical_clinic.dto.BookingSummaryDto;
+import io.github.pomian99.medical_clinic.dto.PageResponse;
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
 import io.github.pomian99.medical_clinic.dto.VisitDto;
+import io.github.pomian99.medical_clinic.facade.VisitBookingFacade;
 import io.github.pomian99.medical_clinic.mapper.VisitMapper;
 import io.github.pomian99.medical_clinic.service.VisitService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +15,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +37,20 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VisitController {
     private final VisitService visitService;
+    private final VisitBookingFacade bookingFacade;
     private final VisitMapper mapper;
+
+    @Operation(
+        summary = "List all visits page by page",
+        description = "Query parameters page (from 0), size and sort, e.g. ?page=1&size=5&sort=startsAt,desc. "
+            + "Without them: first page of 20 visits, sorted by startsAt, then id."
+    )
+    @GetMapping
+    public PageResponse<VisitDto> getVisits(
+        @PageableDefault(size = 20, sort = {"startsAt", "id"}) Pageable pageable
+    ) {
+        return PageResponse.from(visitService.findAll(pageable).map(mapper::toDto));
+    }
 
     @Operation(
             summary = "List visits of doctor with given id",
@@ -43,12 +61,12 @@ public class VisitController {
             @ApiResponse(responseCode = "200", description = "Visits of the doctor"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "The doctorId parameter is missing or is not a number",
+                    description = "The doctorId parameter is not a number",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))
     })
-    @GetMapping
+    @GetMapping(params = "doctorId")
     public List<VisitDto> getVisitsByDoctorId(@RequestParam long doctorId) {
         return mapper.toDto(visitService.findAllByDoctorId(doctorId));
     }
@@ -109,7 +127,7 @@ public class VisitController {
             description = "Assigns the patient to a free slot that has not started yet."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Visit booked"),
+            @ApiResponse(responseCode = "200", description = "Visit booked, booking summary returned"),
             @ApiResponse(
                     responseCode = "400",
                     description = "The visit is in the past, or an id in the path is not a number",
@@ -130,7 +148,7 @@ public class VisitController {
                     ))
     })
     @PatchMapping("/{id}/book/{patientId}")
-    public VisitDto bookVisit(@PathVariable long id, @PathVariable long patientId) {
-        return mapper.toDto(visitService.book(id, patientId));
+    public BookingSummaryDto bookVisit(@PathVariable long id, @PathVariable long patientId) {
+        return bookingFacade.book(id, patientId);
     }
 }

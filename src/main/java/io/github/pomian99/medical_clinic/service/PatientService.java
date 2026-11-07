@@ -11,6 +11,8 @@ import io.github.pomian99.medical_clinic.model.User;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +20,12 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PatientService {
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
     private final PatientMapper mapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public List<Patient> findAll() {
@@ -37,7 +41,7 @@ public class PatientService {
     @Transactional(readOnly = true)
     public Patient findByEmail(String email) {
         return patientRepository.findByUserEmail(email)
-                .orElseThrow(() -> new PatientNotFoundException(email));
+                .orElseThrow(PatientNotFoundException::new);
     }
 
     @Transactional(readOnly = true)
@@ -52,19 +56,21 @@ public class PatientService {
         // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
         if (userRepository.existsByEmail(command.email())) {
-            throw new UserAlreadyExistsException(command.email());
+            throw new UserAlreadyExistsException();
         }
 
         User user = User.builder()
             .email(command.email())
-            .password(command.password())
+            .password(passwordEncoder.encode(command.password()))
             .role(Role.PATIENT)
             .build();
 
         Patient patient = mapper.toEntity(command);
         patient.setUser(user);
 
-        return patientRepository.save(patient);
+        Patient saved = patientRepository.save(patient);
+        log.info("Registered patient {}", saved.getId());
+        return saved;
     }
 
     @Transactional
@@ -72,6 +78,7 @@ public class PatientService {
         Patient patient = findById(id);
 
         mapper.update(patient, command);
+        log.info("Updated patient {}", id);
         return patient;
     }
 
@@ -79,7 +86,8 @@ public class PatientService {
     public Patient changePassword(long id, String password) {
         return patientRepository.findById(id)
                 .map(patient -> {
-                    patient.updatePassword(password);
+                    patient.updatePassword(passwordEncoder.encode(password));
+                    log.info("Changed password of patient {}", id);
                     return patient;
                 })
                 .orElseThrow(() -> new PatientNotFoundException(id));
@@ -91,5 +99,6 @@ public class PatientService {
             throw new PatientNotFoundException(id);
         }
         patientRepository.deleteById(id);
+        log.info("Deleted patient {}", id);
     }
 }
