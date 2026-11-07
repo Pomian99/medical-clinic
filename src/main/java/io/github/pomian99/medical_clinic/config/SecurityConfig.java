@@ -2,6 +2,7 @@ package io.github.pomian99.medical_clinic.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -11,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
+@Import(JwtConfig.class)
 public class SecurityConfig {
 
     @Bean
@@ -21,6 +23,7 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/patients").anonymous()
+                .requestMatchers(HttpMethod.POST, "/auth/token").permitAll()
                 .requestMatchers(HttpMethod.GET, "/patients").hasRole("ADMIN")
                 .requestMatchers("/users/**").hasRole("ADMIN")
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
@@ -32,7 +35,7 @@ public class SecurityConfig {
                 .requestMatchers("/doctors/*/facilities/*").hasRole("DOCTOR")
                 .requestMatchers("/patients/**", "/doctors/**", "/facilities/**", "/visits/**").hasRole("PATIENT")
                 .anyRequest().denyAll())
-            .httpBasic(Customizer.withDefaults());
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
         return http.build();
     }
 

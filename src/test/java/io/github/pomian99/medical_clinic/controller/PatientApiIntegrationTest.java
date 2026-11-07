@@ -1,5 +1,6 @@
 package io.github.pomian99.medical_clinic.controller;
 
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -7,9 +8,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -41,14 +39,16 @@ class PatientApiIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isCreated());
+        String patientToken = token("anna.nowak@poczta.pl", "Secret123!");
+        String adminToken = token("admin", "admin");
 
         // when
         var asPatient = mockMvc.perform(get("/patients")
             .param("email", "anna.nowak@poczta.pl")
-            .header(HttpHeaders.AUTHORIZATION, basic("anna.nowak@poczta.pl:Secret123!")));
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + patientToken));
         var asAdmin = mockMvc.perform(get("/patients")
             .param("email", "anna.nowak@poczta.pl")
-            .header(HttpHeaders.AUTHORIZATION, basic("admin:admin")));
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken));
 
         // then
         asPatient.andExpect(status().isForbidden());
@@ -58,8 +58,14 @@ class PatientApiIntegrationTest {
             .andExpect(jsonPath("$.lastName").value("Nowak"));
     }
 
-    private static String basic(String emailAndPassword) {
-        return "Basic " + Base64.getEncoder().encodeToString(
-            emailAndPassword.getBytes(StandardCharsets.UTF_8));
+    private String token(String email, String password) throws Exception {
+        String response = mockMvc.perform(post("/auth/token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"email": "%s", "password": "%s"}
+                    """.formatted(email, password)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        return JsonPath.read(response, "$.token");
     }
 }

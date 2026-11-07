@@ -15,9 +15,8 @@ http:
         "endsAt": "2030-01-14T09:15:00"
       }
   auth:
-    type: basic
-    username: "{{adminEmail}}"
-    password: "{{adminPassword}}"
+    type: bearer
+    token: "{{adminToken}}"
 
 runtime:
   assertions:

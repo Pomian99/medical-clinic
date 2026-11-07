@@ -15,9 +15,8 @@ config:
       bypassProxy: ""
 request:
   auth:
-    type: basic
-    username: "{{email}}"
-    password: "{{password}}"
+    type: bearer
+    token: "{{token}}"
 bundled: false
 extensions:
   bruno:
