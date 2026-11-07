@@ -6,10 +6,6 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/visits?doctorId=1"
-  params:
-    - name: doctorId
-      value: "1"
-      type: query
   auth: inherit
 
 runtime:

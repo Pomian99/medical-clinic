@@ -24,6 +24,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/patients").hasRole("ADMIN")
                 .requestMatchers("/users/**").hasRole("ADMIN")
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/postman/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/visits").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/doctors", "/facilities").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/doctors").hasRole("ADMIN")

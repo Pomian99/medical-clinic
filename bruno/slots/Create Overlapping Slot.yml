@@ -14,7 +14,10 @@ http:
         "startsAt": "2030-01-21T10:15:00",
         "endsAt": "2030-01-21T10:45:00"
       }
-  auth: inherit
+  auth:
+    type: basic
+    username: "{{adminEmail}}"
+    password: "{{adminPassword}}"
 
 runtime:
   assertions:

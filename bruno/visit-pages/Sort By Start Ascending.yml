@@ -6,10 +6,6 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/visits?sort=startsAt,asc"
-  params:
-    - name: sort
-      value: startsAt,asc
-      type: query
   auth: inherit
 
 runtime:
@@ -17,7 +13,7 @@ runtime:
     - type: tests
       code: |-
         test("visits are sorted by startsAt ascending", function () {
-          const starts = res.body.content.map((visit) => visit.startsAt);
+          const starts = res.getBody().content.map((visit) => visit.startsAt);
           expect(starts.length).to.be.above(1);
           for (let i = 1; i < starts.length; i++) {
             expect(starts[i] >= starts[i - 1]).to.equal(true);

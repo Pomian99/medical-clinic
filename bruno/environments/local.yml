@@ -3,3 +3,21 @@ variables:
   - name: baseUrl
     value: http://localhost:8080
     description: ""
+  - name: email
+    value: anna.nowak@example.com
+    description: ""
+  - name: password
+    value: Silne123!
+    description: ""
+  - name: adminEmail
+    value: admin
+    description: ""
+  - name: adminPassword
+    value: admin
+    description: ""
+  - name: doctorEmail
+    value: katarzyna.wrobel@example.com
+    description: ""
+  - name: doctorPassword
+    value: Silne321!
+    description: ""

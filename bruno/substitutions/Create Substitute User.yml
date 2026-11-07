@@ -14,12 +14,15 @@ http:
         "password": "Secret#123",
         "role": "DOCTOR"
       }
-  auth: inherit
+  auth:
+    type: basic
+    username: "{{adminEmail}}"
+    password: "{{adminPassword}}"
 
 runtime:
   scripts:
     - type: after-response
-      code: bru.setVar("substituteUserId", res.body.id);
+      code: bru.setVar("substituteUserId", res.getBody().id);
   assertions:
     - expression: res.status
       operator: eq

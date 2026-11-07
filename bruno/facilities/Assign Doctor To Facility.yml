@@ -6,7 +6,10 @@ info:
 http:
   method: POST
   url: "{{baseUrl}}/doctors/1/facilities/{{facilityId}}"
-  auth: inherit
+  auth:
+    type: basic
+    username: "{{doctorEmail}}"
+    password: "{{doctorPassword}}"
 
 runtime:
   assertions:

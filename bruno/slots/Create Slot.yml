@@ -14,12 +14,15 @@ http:
         "startsAt": "2030-01-21T10:00:00",
         "endsAt": "2030-01-21T10:30:00"
       }
-  auth: inherit
+  auth:
+    type: basic
+    username: "{{adminEmail}}"
+    password: "{{adminPassword}}"
 
 runtime:
   scripts:
     - type: after-response
-      code: bru.setVar("slotId", res.body.id);
+      code: bru.setVar("slotId", res.getBody().id);
   assertions:
     - expression: res.status
       operator: eq

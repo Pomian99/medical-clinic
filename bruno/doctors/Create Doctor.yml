@@ -15,7 +15,10 @@ http:
         "lastName": "Mazur",
         "specialization": "DERMATOLOGIST"
       }
-  auth: inherit
+  auth:
+    type: basic
+    username: "{{adminEmail}}"
+    password: "{{adminPassword}}"
 
 runtime:
   assertions:
