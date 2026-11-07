@@ -24,7 +24,7 @@ http:
 runtime:
   scripts:
     - type: after-response
-      code: bru.setVar("facilityId", res.body.id);
+      code: bru.setVar("facilityId", res.getBody().id);
   assertions:
     - expression: res.status
       operator: eq

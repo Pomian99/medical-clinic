@@ -17,21 +17,15 @@ http:
   auth: inherit
 
 runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("userId", res.getBody().id);
   assertions:
     - expression: res.status
       operator: eq
       value: "201"
     - expression: res.body.password
       operator: isUndefined
-  actions:
-    - type: set-variable
-      phase: after-response
-      selector:
-        expression: res.body.id
-        method: jsonq
-      variable:
-        name: userId
-        scope: runtime
 
 settings:
   encodeUrl: true

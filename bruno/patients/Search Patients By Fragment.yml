@@ -6,10 +6,6 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/patients?fragment=KOW"
-  params:
-    - name: fragment
-      value: KOW
-      type: query
   auth:
     type: basic
     username: "{{adminEmail}}"

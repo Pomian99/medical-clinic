@@ -22,7 +22,7 @@ http:
 runtime:
   scripts:
     - type: after-response
-      code: bru.setVar("slotId", res.body.id);
+      code: bru.setVar("slotId", res.getBody().id);
   assertions:
     - expression: res.status
       operator: eq
