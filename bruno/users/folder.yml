@@ -1,10 +1,9 @@
 info:
   name: users
   type: folder
-  seq: 2
+  seq: 3
 
 request:
   auth:
-    type: basic
-    username: "{{adminEmail}}"
-    password: "{{adminPassword}}"
+    type: bearer
+    token: "{{adminToken}}"

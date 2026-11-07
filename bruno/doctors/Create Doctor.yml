@@ -16,9 +16,8 @@ http:
         "specialization": "DERMATOLOGIST"
       }
   auth:
-    type: basic
-    username: "{{adminEmail}}"
-    password: "{{adminPassword}}"
+    type: bearer
+    token: "{{adminToken}}"
 
 runtime:
   assertions:
