@@ -1,0 +1,24 @@
+info:
+  name: Remove Doctor With Visits
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/doctors/1"
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "409"
+
+docs: Doctor 1 has the slot made by "Create Visit", and a visit cannot exist without a doctor.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

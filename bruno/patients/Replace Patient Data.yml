@@ -5,18 +5,23 @@ info:
 
 http:
   method: PUT
-  url: "{{baseUrl}}/patients/1"
+  url: "{{baseUrl}}/patients/{{patientId}}"
   body:
     type: json
     data: |-
       {
-        "email": "anna.nowak@example.com",
-        "firstName": "Anna",
-        "lastName": "Nowakówna",
-        "phoneNumber": "600100200",
-        "birthday": "1990-05-12"
+        "firstName": "Piotr",
+        "lastName": "Zieliński-Nowak",
+        "phoneNumber": "600100201",
+        "birthday": "1992-07-15"
       }
   auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
 
 settings:
   encodeUrl: true

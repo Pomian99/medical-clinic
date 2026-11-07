@@ -1,0 +1,32 @@
+info:
+  name: Create Facility Name Taken
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/facilities"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Przychodnia Centrum",
+        "city": "Kraków"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "409"
+
+docs: |-
+  The name comes from data.sql, so it is taken on every database.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

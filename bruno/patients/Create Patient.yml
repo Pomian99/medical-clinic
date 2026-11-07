@@ -10,15 +10,28 @@ http:
     type: json
     data: |-
       {
-        "email": "anna.nowak@example.com",
+        "email": "piotr.zielinski@example.com",
         "password": "Secret#123",
-        "idCardNo": "ABC123456",
-        "firstName": "Anna",
-        "lastName": "Nowak",
+        "idCardNo": "DEF654321",
+        "firstName": "Piotr",
+        "lastName": "Zieliński",
         "phoneNumber": "600100200",
-        "birthday": "1990-05-12"
+        "birthday": "1992-07-15"
       }
   auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("patientId", res.body.id);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+
+docs: |-
+  The folder works on its own patient, not on one from data.sql, so changing and deleting it
+  leaves the data other folders rely on in place. Its id is saved for the next requests.
 
 settings:
   encodeUrl: true

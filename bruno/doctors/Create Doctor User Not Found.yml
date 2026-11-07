@@ -1,0 +1,31 @@
+info:
+  name: Create Doctor User Not Found
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/doctors"
+  body:
+    type: json
+    data: |-
+      {
+        "userId": -1,
+        "firstName": "Adam",
+        "lastName": "Mazur",
+        "specialization": "PEDIATRICIAN"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "404"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

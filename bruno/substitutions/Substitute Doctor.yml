@@ -1,0 +1,28 @@
+info:
+  name: Substitute Doctor
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/doctors/1/substitutions"
+  body:
+    type: json
+    data: |-
+      {
+        "substituteId": {{substituteId}}
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "409"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

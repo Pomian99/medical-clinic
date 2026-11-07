@@ -1,0 +1,29 @@
+info:
+  name: Book Slot
+  type: http
+  seq: 2
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/visits/{{slotId}}/book/1"
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.patientId
+      operator: eq
+      value: "1"
+
+docs: |-
+  Patient 1 is Anna Nowak from data.sql. She is the first patient inserted into an empty
+  database, so her id is 1 however many times the application starts.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,0 +1,24 @@
+info:
+  name: Book Taken Slot
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/visits/{{slotId}}/book/2"
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "409"
+
+docs: Patient 1 has booked this slot in "Book Slot", so patient 2 cannot take it.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

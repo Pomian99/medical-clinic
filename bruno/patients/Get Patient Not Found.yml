@@ -8,6 +8,12 @@ http:
   url: "{{baseUrl}}/patients/-1"
   auth: inherit
 
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "404"
+
 settings:
   encodeUrl: true
   timeout: 0

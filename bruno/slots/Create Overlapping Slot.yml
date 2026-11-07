@@ -1,0 +1,32 @@
+info:
+  name: Create Overlapping Slot
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/visits"
+  body:
+    type: json
+    data: |-
+      {
+        "doctorId": 1,
+        "startsAt": "2030-01-21T10:15:00",
+        "endsAt": "2030-01-21T10:45:00"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "409"
+
+docs: 10:15-10:45 starts before the booked 10:00-10:30 slot ends, so the doctor would have two visits at once.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
