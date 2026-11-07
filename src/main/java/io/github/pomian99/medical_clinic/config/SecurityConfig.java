@@ -25,6 +25,10 @@ public class SecurityConfig {
                 .requestMatchers("/users/**").hasRole("ADMIN")
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/visits").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/doctors", "/facilities").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/doctors").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/facilities/**").authenticated()
+                .requestMatchers("/doctors/*/facilities/*").hasRole("DOCTOR")
                 .requestMatchers("/patients/**", "/doctors/**", "/facilities/**", "/visits/**").hasRole("PATIENT")
                 .anyRequest().denyAll())
             .httpBasic(Customizer.withDefaults());
