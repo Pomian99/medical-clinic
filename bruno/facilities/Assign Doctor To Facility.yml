@@ -6,7 +6,9 @@ info:
 http:
   method: POST
   url: "{{baseUrl}}/doctors/1/facilities/{{facilityId}}"
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{doctorToken}}"
 
 runtime:
   assertions:

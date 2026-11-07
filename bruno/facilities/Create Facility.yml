@@ -16,12 +16,14 @@ http:
         "street": "Królewska",
         "number": "20"
       }
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{adminToken}}"
 
 runtime:
   scripts:
     - type: after-response
-      code: bru.setVar("facilityId", res.body.id);
+      code: bru.setVar("facilityId", res.getBody().id);
   assertions:
     - expression: res.status
       operator: eq

@@ -1,0 +1,392 @@
+databaseChangeLog:
+- changeSet:
+    id: "1"
+    author: kursant
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: doctors_pkey
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: first_name
+            type: VARCHAR(100)
+        - column:
+            constraints:
+              nullable: false
+            name: last_name
+            type: VARCHAR(100)
+        - column:
+            constraints:
+              nullable: false
+            name: specialization
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: user_id
+            type: BIGINT
+        tableName: doctors
+    rollback:
+    - dropTable:
+        tableName: doctors
+- changeSet:
+    id: "2"
+    author: kursant
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: users_pkey
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: email
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: password
+            type: VARCHAR(255)
+        - column:
+            name: role
+            type: VARCHAR(255)
+        tableName: users
+    rollback:
+    - dropTable:
+        tableName: users
+- changeSet:
+    id: "3"
+    author: kursant
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: patients_pkey
+            name: id
+            type: BIGINT
+        - column:
+            name: birthday
+            type: date
+        - column:
+            constraints:
+              nullable: false
+            name: first_name
+            type: VARCHAR(100)
+        - column:
+            constraints:
+              nullable: false
+            name: id_card_no
+            type: VARCHAR(20)
+        - column:
+            constraints:
+              nullable: false
+            name: last_name
+            type: VARCHAR(100)
+        - column:
+            constraints:
+              nullable: false
+            name: phone_number
+            type: VARCHAR(20)
+        - column:
+            constraints:
+              nullable: false
+            name: user_id
+            type: BIGINT
+        tableName: patients
+    rollback:
+    - dropTable:
+        tableName: patients
+- changeSet:
+    id: "4"
+    author: kursant
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: facilities_pkey
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: city
+            type: VARCHAR(255)
+        - column:
+            constraints:
+              nullable: false
+            name: name
+            type: VARCHAR(255)
+        - column:
+            name: number
+            type: VARCHAR(255)
+        - column:
+            name: street
+            type: VARCHAR(255)
+        - column:
+            name: zip_code
+            type: VARCHAR(255)
+        tableName: facilities
+    rollback:
+    - dropTable:
+        tableName: facilities
+- changeSet:
+    id: "5"
+    author: kursant
+    changes:
+    - addUniqueConstraint:
+        columnNames: user_id
+        constraintName: ukt1f6cueqyjwx5ghew9ar1exe3
+        tableName: doctors
+    rollback:
+    - dropUniqueConstraint:
+        constraintName: ukt1f6cueqyjwx5ghew9ar1exe3
+        tableName: doctors
+- changeSet:
+    id: "6"
+    author: kursant
+    changes:
+    - addUniqueConstraint:
+        columnNames: email
+        constraintName: uk6dotkott2kjsp8vw4d0m25fb7
+        tableName: users
+    rollback:
+    - dropUniqueConstraint:
+        constraintName: uk6dotkott2kjsp8vw4d0m25fb7
+        tableName: users
+- changeSet:
+    id: "7"
+    author: kursant
+    changes:
+    - addUniqueConstraint:
+        columnNames: id_card_no
+        constraintName: uk3usu2gl5shfee2u3f4gfw4w3p
+        tableName: patients
+    rollback:
+    - dropUniqueConstraint:
+        constraintName: uk3usu2gl5shfee2u3f4gfw4w3p
+        tableName: patients
+- changeSet:
+    id: "8"
+    author: kursant
+    changes:
+    - addUniqueConstraint:
+        columnNames: user_id
+        constraintName: uk9tbsl3fmey0eofbm2xj69v4qs
+        tableName: patients
+    rollback:
+    - dropUniqueConstraint:
+        constraintName: uk9tbsl3fmey0eofbm2xj69v4qs
+        tableName: patients
+- changeSet:
+    id: "9"
+    author: kursant
+    changes:
+    - addUniqueConstraint:
+        columnNames: name
+        constraintName: uk6tm0w2xajnx3l566muxq8apmq
+        tableName: facilities
+    rollback:
+    - dropUniqueConstraint:
+        constraintName: uk6tm0w2xajnx3l566muxq8apmq
+        tableName: facilities
+- changeSet:
+    id: "10"
+    author: kursant
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: doctor_facility_pkey
+            name: doctor_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: doctor_facility_pkey
+            name: facility_id
+            type: BIGINT
+        tableName: doctor_facility
+    rollback:
+    - dropTable:
+        tableName: doctor_facility
+- changeSet:
+    id: "11"
+    author: kursant
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: visits_pkey
+            name: id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: ends_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: starts_at
+            type: TIMESTAMP WITHOUT TIME ZONE
+        - column:
+            constraints:
+              nullable: false
+            name: version
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: doctor_id
+            type: BIGINT
+        - column:
+            name: patient_id
+            type: BIGINT
+        tableName: visits
+    rollback:
+    - dropTable:
+        tableName: visits
+- changeSet:
+    id: "12"
+    author: kursant
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: facility_id
+        baseTableName: doctor_facility
+        constraintName: fk6rvws93w4vd9s5tggl1diftg0
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: facilities
+        validate: true
+    rollback:
+    - dropForeignKeyConstraint:
+        baseTableName: doctor_facility
+        constraintName: fk6rvws93w4vd9s5tggl1diftg0
+- changeSet:
+    id: "13"
+    author: kursant
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: user_id
+        baseTableName: doctors
+        constraintName: fke9pf5qtxxkdyrwibaevo9frtk
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: users
+        validate: true
+    rollback:
+    - dropForeignKeyConstraint:
+        baseTableName: doctors
+        constraintName: fke9pf5qtxxkdyrwibaevo9frtk
+- changeSet:
+    id: "14"
+    author: kursant
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: doctor_id
+        baseTableName: doctor_facility
+        constraintName: fkj2psotpoak4d7vydo85rjtxb1
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: doctors
+        validate: true
+    rollback:
+    - dropForeignKeyConstraint:
+        baseTableName: doctor_facility
+        constraintName: fkj2psotpoak4d7vydo85rjtxb1
+- changeSet:
+    id: "15"
+    author: kursant
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: patient_id
+        baseTableName: visits
+        constraintName: fkra5p2e0tp6djolm46kdr42cyt
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: patients
+        validate: true
+    rollback:
+    - dropForeignKeyConstraint:
+        baseTableName: visits
+        constraintName: fkra5p2e0tp6djolm46kdr42cyt
+- changeSet:
+    id: "16"
+    author: kursant
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: doctor_id
+        baseTableName: visits
+        constraintName: fkth95fndjk3y3nepjfu3f66r63
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: doctors
+        validate: true
+    rollback:
+    - dropForeignKeyConstraint:
+        baseTableName: visits
+        constraintName: fkth95fndjk3y3nepjfu3f66r63
+- changeSet:
+    id: "17"
+    author: kursant
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: user_id
+        baseTableName: patients
+        constraintName: fkuwca24wcd1tg6pjex8lmc0y7
+        deferrable: false
+        initiallyDeferred: false
+        onDelete: NO ACTION
+        onUpdate: NO ACTION
+        referencedColumnNames: id
+        referencedTableName: users
+        validate: true
+    rollback:
+    - dropForeignKeyConstraint:
+        baseTableName: patients
+        constraintName: fkuwca24wcd1tg6pjex8lmc0y7

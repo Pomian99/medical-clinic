@@ -10,6 +10,8 @@ import io.github.pomian99.medical_clinic.repository.DoctorRepository;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,11 +19,13 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
     private final UserMapper mapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public List<User> findAll() {
@@ -37,7 +41,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
-            .orElseThrow(() -> new UserNotFoundException(email));
+            .orElseThrow(UserNotFoundException::new);
     }
 
     @Transactional
@@ -45,10 +49,15 @@ public class UserService {
         // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
         if (userRepository.existsByEmail(command.email())) {
-            throw new UserAlreadyExistsException(command.email());
+            throw new UserAlreadyExistsException();
         }
 
-        return userRepository.save(mapper.toEntity(command));
+        User user = mapper.toEntity(command);
+        user.updatePassword(passwordEncoder.encode(command.password()));
+
+        User saved = userRepository.save(user);
+        log.info("Created user {}", saved.getId());
+        return saved;
     }
 
     @Transactional
@@ -60,5 +69,6 @@ public class UserService {
             throw new UserInUseException(id);
         }
         userRepository.deleteById(id);
+        log.info("Deleted user {}", id);
     }
 }

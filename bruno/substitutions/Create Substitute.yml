@@ -15,12 +15,14 @@ http:
         "lastName": "Kaczmarek",
         "specialization": "CARDIOLOGIST"
       }
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{adminToken}}"
 
 runtime:
   scripts:
     - type: after-response
-      code: bru.setVar("substituteId", res.body.id);
+      code: bru.setVar("substituteId", res.getBody().id);
   assertions:
     - expression: res.status
       operator: eq

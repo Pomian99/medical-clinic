@@ -7,6 +7,7 @@ import io.github.pomian99.medical_clinic.mapper.FacilityMapper;
 import io.github.pomian99.medical_clinic.model.Facility;
 import io.github.pomian99.medical_clinic.repository.FacilityRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FacilityService {
     private final FacilityRepository facilityRepository;
     private final FacilityMapper mapper;
@@ -36,6 +38,8 @@ public class FacilityService {
             throw new FacilityAlreadyExistsException(command.name());
         }
 
-        return facilityRepository.save(mapper.toEntity(command));
+        Facility saved = facilityRepository.save(mapper.toEntity(command));
+        log.info("Created facility {}", saved.getId());
+        return saved;
     }
 }

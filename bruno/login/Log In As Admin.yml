@@ -1,0 +1,33 @@
+info:
+  name: Log In As Admin
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/token"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{adminEmail}}",
+        "password": "{{adminPassword}}"
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("adminToken", res.getBody().token);
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+
+docs: Logs in as the admin from the schema history. The token is saved in "adminToken" for requests that need the ADMIN role.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
