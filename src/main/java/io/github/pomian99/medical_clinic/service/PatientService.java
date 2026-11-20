@@ -1,6 +1,7 @@
 package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
+import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
@@ -28,31 +29,31 @@ public class PatientService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
-    public List<Patient> findAll() {
-        return patientRepository.findAll();
+    public List<PatientDto> findAll() {
+        return mapper.toDto(patientRepository.findAll());
     }
 
     @Transactional(readOnly = true)
-    public Patient findById(long id) {
-        return patientRepository.findById(id)
-                .orElseThrow(() -> new PatientNotFoundException(id));
+    public PatientDto findById(long id) {
+        return mapper.toDto(getPatient(id));
     }
 
     @Transactional(readOnly = true)
-    public Patient findByEmail(String email) {
-        return patientRepository.findByUserEmail(email)
+    public PatientDto findByEmail(String email) {
+        Patient patient = patientRepository.findByUserEmail(email)
                 .orElseThrow(PatientNotFoundException::new);
+        return mapper.toDto(patient);
     }
 
     @Transactional(readOnly = true)
-    public List<Patient> findByFragment(String fragment) {
-        return patientRepository.searchByFragment(fragment);
+    public List<PatientDto> findByFragment(String fragment) {
+        return mapper.toDto(patientRepository.searchByFragment(fragment));
     }
 
     // Two inserts (users, then patients) must succeed or fail together: without a
     // transaction a failed patient insert would leave an account nobody can register to.
     @Transactional
-    public Patient create(PatientCreateCommand command) {
+    public PatientDto create(PatientCreateCommand command) {
         // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
         if (userRepository.existsByEmail(command.email())) {
@@ -70,27 +71,24 @@ public class PatientService {
 
         Patient saved = patientRepository.save(patient);
         log.info("Registered patient {}", saved.getId());
-        return saved;
+        return mapper.toDto(saved);
     }
 
     @Transactional
-    public Patient update(long id, PatientUpdateCommand command) {
-        Patient patient = findById(id);
+    public PatientDto update(long id, PatientUpdateCommand command) {
+        Patient patient = getPatient(id);
 
         mapper.update(patient, command);
         log.info("Updated patient {}", id);
-        return patient;
+        return mapper.toDto(patient);
     }
 
     @Transactional
-    public Patient changePassword(long id, String password) {
-        return patientRepository.findById(id)
-                .map(patient -> {
-                    patient.updatePassword(passwordEncoder.encode(password));
-                    log.info("Changed password of patient {}", id);
-                    return patient;
-                })
-                .orElseThrow(() -> new PatientNotFoundException(id));
+    public PatientDto changePassword(long id, String password) {
+        Patient patient = getPatient(id);
+        patient.updatePassword(passwordEncoder.encode(password));
+        log.info("Changed password of patient {}", id);
+        return mapper.toDto(patient);
     }
 
     @Transactional
@@ -100,5 +98,10 @@ public class PatientService {
         }
         patientRepository.deleteById(id);
         log.info("Deleted patient {}", id);
+    }
+
+    private Patient getPatient(long id) {
+        return patientRepository.findById(id)
+                .orElseThrow(() -> new PatientNotFoundException(id));
     }
 }

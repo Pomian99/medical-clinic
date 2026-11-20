@@ -1,9 +1,9 @@
 package io.github.pomian99.medical_clinic.facade;
 
 import io.github.pomian99.medical_clinic.dto.BookingSummaryDto;
+import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.exception.VisitAlreadyBookedException;
 import io.github.pomian99.medical_clinic.mapper.DoctorMapper;
-import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.mapper.VisitMapper;
 import io.github.pomian99.medical_clinic.model.Doctor;
 import io.github.pomian99.medical_clinic.model.Patient;
@@ -50,12 +50,11 @@ class VisitBookingFacadeTest {
     @BeforeEach
     void setUp() {
         VisitMapper visitMapper = Mappers.getMapper(VisitMapper.class);
-        PatientMapper patientMapper = Mappers.getMapper(PatientMapper.class);
         DoctorMapper doctorMapper = Mappers.getMapper(DoctorMapper.class);
 
         visitBookingFacade = new VisitBookingFacade(
             visitService, patientService, doctorService,
-            visitMapper, patientMapper, doctorMapper
+            visitMapper, doctorMapper
         );
     }
 
@@ -76,7 +75,9 @@ class VisitBookingFacadeTest {
             .startsAt(DAY.atTime(8, 0))
             .build();
         when(visitService.book(3L, 1L)).thenReturn(visit);
-        when(patientService.findById(1L)).thenReturn(patient);
+        when(patientService.findById(1L)).thenReturn(
+            new PatientDto(1L, "jankow@poczta.pl", "Jan", "Kowalski", null, null, "Jan Kowalski")
+        );
         when(doctorService.findById(2L)).thenReturn(doctor);
         when(visitService.countFreeSlots(2L, DAY)).thenReturn(5L);
 

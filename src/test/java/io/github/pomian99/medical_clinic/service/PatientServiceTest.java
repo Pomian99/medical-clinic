@@ -1,6 +1,7 @@
 package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
+import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
@@ -10,10 +11,11 @@ import io.github.pomian99.medical_clinic.model.Role;
 import io.github.pomian99.medical_clinic.model.User;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,7 +25,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -41,13 +42,15 @@ class PatientServiceTest {
     UserRepository userRepository;
 
     @Mock
-    PatientMapper mapper;
-
-    @Mock
     PasswordEncoder passwordEncoder;
 
-    @InjectMocks
     PatientService patientService;
+
+    @BeforeEach
+    void setUp() {
+        PatientMapper mapper = Mappers.getMapper(PatientMapper.class);
+        patientService = new PatientService(patientRepository, userRepository, mapper, passwordEncoder);
+    }
 
     @Test
     void findAll_twoPatientsExist_returnsBothPatients() {
@@ -63,11 +66,11 @@ class PatientServiceTest {
         when(patientRepository.findAll()).thenReturn(List.of(jan, anna));
 
         // when
-        List<Patient> result = patientService.findAll();
+        List<PatientDto> result = patientService.findAll();
 
         // then
         assertEquals(2, result.size());
-        assertEquals("Anna", result.get(1).getFirstName());
+        assertEquals("Anna", result.get(1).firstName());
     }
 
     @Test
@@ -81,10 +84,11 @@ class PatientServiceTest {
         when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
 
         // when
-        Patient result = patientService.findById(1L);
+        PatientDto result = patientService.findById(1L);
 
         // then
-        assertEquals("Jan", result.getFirstName());
+        assertEquals("Jan", result.firstName());
+        assertEquals("Jan Kowalski", result.fullName());
     }
 
     @Test
@@ -116,10 +120,11 @@ class PatientServiceTest {
         when(patientRepository.findByUserEmail("jankow@poczta.pl")).thenReturn(Optional.of(patient));
 
         // when
-        Patient result = patientService.findByEmail("jankow@poczta.pl");
+        PatientDto result = patientService.findByEmail("jankow@poczta.pl");
 
         // then
-        assertEquals(1L, result.getId());
+        assertEquals(1L, result.id());
+        assertEquals("jankow@poczta.pl", result.email());
     }
 
     @Test
@@ -147,15 +152,15 @@ class PatientServiceTest {
         when(patientRepository.searchByFragment("Kowal")).thenReturn(List.of(patient));
 
         // when
-        List<Patient> result = patientService.findByFragment("Kowal");
+        List<PatientDto> result = patientService.findByFragment("Kowal");
 
         // then
         assertEquals(1, result.size());
-        assertEquals("Kowalski", result.get(0).getLastName());
+        assertEquals("Kowalski", result.get(0).lastName());
     }
 
     @Test
-    void create_newEmail_savesPatientWithAccount() {
+    void create_newEmail_returnsPatientWithEmail() {
         // given
         PatientCreateCommand command = new PatientCreateCommand(
             "jankow@poczta.pl",
@@ -166,22 +171,16 @@ class PatientServiceTest {
             "123456789",
             LocalDate.of(1990, 5, 15)
         );
-        Patient patient = Patient.builder()
-            .firstName("Jan")
-            .lastName("Kowalski")
-            .build();
         when(userRepository.existsByEmail("jankow@poczta.pl")).thenReturn(false);
-        when(mapper.toEntity(command)).thenReturn(patient);
-        when(patientRepository.save(patient)).thenReturn(patient);
+        when(patientRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(passwordEncoder.encode("Secret123!")).thenReturn("hash-Secret123!");
 
         // when
-        Patient result = patientService.create(command);
+        PatientDto result = patientService.create(command);
 
         // then
-        assertEquals("jankow@poczta.pl", result.getUser().getEmail());
-        assertEquals("hash-Secret123!", result.getUser().getPassword());
-        assertEquals(Role.PATIENT, result.getUser().getRole());
+        assertEquals("jankow@poczta.pl", result.email());
+        assertEquals("Jan Kowalski", result.fullName());
     }
 
     @Test
@@ -196,13 +195,9 @@ class PatientServiceTest {
             "123456789",
             LocalDate.of(1990, 5, 15)
         );
-        Patient patient = Patient.builder()
-            .firstName("Jan")
-            .lastName("Kowalski")
-            .build();
         when(userRepository.existsByEmail("jankow@poczta.pl")).thenReturn(false);
-        when(mapper.toEntity(command)).thenReturn(patient);
         when(patientRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(passwordEncoder.encode("Secret123!")).thenReturn("hash-Secret123!");
         ArgumentCaptor<Patient> captor = ArgumentCaptor.forClass(Patient.class);
 
         // when
@@ -212,7 +207,9 @@ class PatientServiceTest {
         verify(patientRepository).save(captor.capture());
         Patient saved = captor.getValue();
         assertEquals("Jan", saved.getFirstName());
+        assertEquals("ABC123456", saved.getIdCardNo());
         assertEquals("jankow@poczta.pl", saved.getUser().getEmail());
+        assertEquals("hash-Secret123!", saved.getUser().getPassword());
         assertEquals(Role.PATIENT, saved.getUser().getRole());
     }
 
@@ -242,11 +239,13 @@ class PatientServiceTest {
     }
 
     @Test
-    void update_patientExists_appliesCommandWithMapper() {
+    void update_patientExists_changesDataAndKeepsIdCardNo() {
         // given
         Patient patient = Patient.builder()
             .id(1L)
+            .idCardNo("ABC123456")
             .firstName("Jan")
+            .lastName("Kowalski")
             .build();
         PatientUpdateCommand command = new PatientUpdateCommand(
             "Janusz",
@@ -257,11 +256,12 @@ class PatientServiceTest {
         when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
 
         // when
-        Patient result = patientService.update(1L, command);
+        PatientDto result = patientService.update(1L, command);
 
         // then
-        verify(mapper).update(patient, command);
-        assertSame(patient, result);
+        assertEquals("Janusz", result.firstName());
+        assertEquals("Nowak", result.lastName());
+        assertEquals("ABC123456", patient.getIdCardNo());
     }
 
     @Test
@@ -283,7 +283,6 @@ class PatientServiceTest {
 
         // then
         assertEquals("Patient with id 1 not found", exception.getMessage());
-        verify(mapper, never()).update(any(), any());
     }
 
     @Test
@@ -302,10 +301,11 @@ class PatientServiceTest {
         when(passwordEncoder.encode("NewSecret123!")).thenReturn("hash-NewSecret123!");
 
         // when
-        Patient result = patientService.changePassword(1L, "NewSecret123!");
+        PatientDto result = patientService.changePassword(1L, "NewSecret123!");
 
         // then
-        assertEquals("hash-NewSecret123!", result.getUser().getPassword());
+        assertEquals(1L, result.id());
+        assertEquals("hash-NewSecret123!", patient.getUser().getPassword());
     }
 
     @Test

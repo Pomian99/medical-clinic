@@ -4,7 +4,6 @@ import io.github.pomian99.medical_clinic.dto.EditPasswordCommand;
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
-import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.service.PatientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,12 +35,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PatientController {
     private final PatientService patientService;
-    private final PatientMapper mapper;
 
     @Operation(summary = "List all patients")
     @GetMapping
     public List<PatientDto> getPatients() {
-        return mapper.toDto(patientService.findAll());
+        return patientService.findAll();
     }
 
     @Operation(summary = "Find patient with given email")
@@ -56,13 +54,13 @@ public class PatientController {
     })
     @GetMapping(params = "email")
     public PatientDto getPatientByEmail(@RequestParam String email) {
-        return mapper.toDto(patientService.findByEmail(email));
+        return patientService.findByEmail(email);
     }
 
     @Operation(summary = "Find patients by a fragment of first or last name (case-insensitive)")
     @GetMapping(params = "fragment")
     public List<PatientDto> getPatientsByFragment(@RequestParam String fragment) {
-        return mapper.toDto(patientService.findByFragment(fragment));
+        return patientService.findByFragment(fragment);
     }
 
     @Operation(summary = "Find patient with given id")
@@ -83,7 +81,7 @@ public class PatientController {
     })
     @GetMapping("/{id}")
     public PatientDto getPatientById(@PathVariable long id) {
-        return mapper.toDto(patientService.findById(id));
+        return patientService.findById(id);
     }
 
     @Operation(summary = "Create new patient")
@@ -105,7 +103,7 @@ public class PatientController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public PatientDto createPatient(@Valid @RequestBody PatientCreateCommand command) {
-        return mapper.toDto(patientService.create(command));
+        return patientService.create(command);
     }
 
     @Operation(summary = "Update data of patient with given id")
@@ -130,7 +128,7 @@ public class PatientController {
             @PathVariable long id,
             @Valid @RequestBody PatientUpdateCommand command
     ) {
-        return mapper.toDto(patientService.update(id, command));
+        return patientService.update(id, command);
     }
 
     @Operation(summary = "Update password of patient with given id")
@@ -155,7 +153,7 @@ public class PatientController {
             @PathVariable long id,
             @Valid @RequestBody EditPasswordCommand command
     ) {
-        return mapper.toDto(patientService.changePassword(id, command.password()));
+        return patientService.changePassword(id, command.password());
     }
 
     @Operation(summary = "Delete patient with given id")

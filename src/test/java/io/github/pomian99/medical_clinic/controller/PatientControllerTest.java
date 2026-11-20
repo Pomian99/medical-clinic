@@ -1,11 +1,9 @@
 package io.github.pomian99.medical_clinic.controller;
 
 import io.github.pomian99.medical_clinic.config.SecurityConfig;
+import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
-import io.github.pomian99.medical_clinic.mapper.PatientMapperImpl;
-import io.github.pomian99.medical_clinic.model.Patient;
-import io.github.pomian99.medical_clinic.model.User;
 import io.github.pomian99.medical_clinic.service.PatientService;
 import org.hibernate.exception.ConstraintViolationException;
 import org.hibernate.exception.ConstraintViolationException.ConstraintKind;
@@ -20,6 +18,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -38,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PatientController.class)
-@Import({PatientMapperImpl.class, SecurityConfig.class})
+@Import(SecurityConfig.class)
 class PatientControllerTest {
 
     // Meets every rule of PatientCreateCommand.
@@ -54,6 +53,16 @@ class PatientControllerTest {
         }
         """;
 
+    static final PatientDto JAN = new PatientDto(
+        1L,
+        "jankow@poczta.pl",
+        "Jan",
+        "Kowalski",
+        "123456789",
+        LocalDate.of(1990, 5, 15),
+        "Jan Kowalski"
+    );
+
     @Autowired
     MockMvc mockMvc;
 
@@ -64,15 +73,16 @@ class PatientControllerTest {
     @WithMockUser(roles = "ADMIN")
     void getPatients_twoPatientsExist_returnsBoth() throws Exception {
         // given
-        Patient jan = Patient.builder()
-            .id(1L)
-            .firstName("Jan")
-            .build();
-        Patient anna = Patient.builder()
-            .id(2L)
-            .firstName("Anna")
-            .build();
-        when(patientService.findAll()).thenReturn(List.of(jan, anna));
+        PatientDto anna = new PatientDto(
+            2L,
+            "anna.nowak@example.com",
+            "Anna",
+            "Nowak",
+            "987654321",
+            LocalDate.of(1985, 3, 2),
+            "Anna Nowak"
+        );
+        when(patientService.findAll()).thenReturn(List.of(JAN, anna));
 
         // when
         var result = mockMvc.perform(get("/patients"));
@@ -87,18 +97,7 @@ class PatientControllerTest {
     @WithMockUser(roles = "PATIENT")
     void getPatientById_patientExists_returnsPatientWithoutIdCardNo() throws Exception {
         // given
-        Patient patient = Patient.builder()
-            .id(1L)
-            .idCardNo("ABC123456")
-            .firstName("Jan")
-            .lastName("Kowalski")
-            .user(
-                User.builder()
-                    .email("jankow@poczta.pl")
-                    .build()
-            )
-            .build();
-        when(patientService.findById(1L)).thenReturn(patient);
+        when(patientService.findById(1L)).thenReturn(JAN);
 
         // when
         var result = mockMvc.perform(get("/patients/1"));
@@ -157,16 +156,7 @@ class PatientControllerTest {
     @WithMockUser(roles = "PATIENT")
     void getPatientById_xmlRequested_returnsNotAcceptable() throws Exception {
         // given
-        Patient patient = Patient.builder()
-            .id(1L)
-            .firstName("Jan")
-            .user(
-                User.builder()
-                    .email("jankow@poczta.pl")
-                    .build()
-            )
-            .build();
-        when(patientService.findById(1L)).thenReturn(patient);
+        when(patientService.findById(1L)).thenReturn(JAN);
 
         // when
         var result = mockMvc.perform(get("/patients/1")
@@ -179,17 +169,7 @@ class PatientControllerTest {
     @Test
     void createPatient_validBody_returnsCreated() throws Exception {
         // given
-        Patient patient = Patient.builder()
-            .id(1L)
-            .firstName("Jan")
-            .lastName("Kowalski")
-            .user(
-                User.builder()
-                    .email("jankow@poczta.pl")
-                    .build()
-            )
-            .build();
-        when(patientService.create(any())).thenReturn(patient);
+        when(patientService.create(any())).thenReturn(JAN);
 
         // when
         var result = mockMvc.perform(post("/patients")
