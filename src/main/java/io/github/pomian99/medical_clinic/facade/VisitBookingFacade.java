@@ -1,10 +1,9 @@
 package io.github.pomian99.medical_clinic.facade;
 
 import io.github.pomian99.medical_clinic.dto.BookingSummaryDto;
+import io.github.pomian99.medical_clinic.dto.DoctorDto;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
-import io.github.pomian99.medical_clinic.mapper.DoctorMapper;
 import io.github.pomian99.medical_clinic.mapper.VisitMapper;
-import io.github.pomian99.medical_clinic.model.Doctor;
 import io.github.pomian99.medical_clinic.model.Visit;
 import io.github.pomian99.medical_clinic.service.DoctorService;
 import io.github.pomian99.medical_clinic.service.PatientService;
@@ -22,19 +21,18 @@ public class VisitBookingFacade {
     private final PatientService patientService;
     private final DoctorService doctorService;
     private final VisitMapper visitMapper;
-    private final DoctorMapper doctorMapper;
 
     @Transactional
     public BookingSummaryDto book(Long visitId, Long patientId) {
         Visit visit = visitService.book(visitId, patientId);
         PatientDto patient = patientService.findById(patientId);
-        Doctor doctor = doctorService.findById(visit.getDoctor().getId());
-        long freeSlots = visitService.countFreeSlots(doctor.getId(), visit.getStartsAt().toLocalDate());
-        log.debug("Built booking summary for visit {} and doctor {}", visit.getId(), doctor.getId());
+        DoctorDto doctor = doctorService.findById(visit.getDoctor().getId());
+        long freeSlots = visitService.countFreeSlots(doctor.id(), visit.getStartsAt().toLocalDate());
+        log.debug("Built booking summary for visit {} and doctor {}", visit.getId(), doctor.id());
         return new BookingSummaryDto(
             visitMapper.toDto(visit),
             patient,
-            doctorMapper.toDto(doctor),
+            doctor,
             freeSlots
         );
     }

@@ -1,9 +1,9 @@
 package io.github.pomian99.medical_clinic.facade;
 
 import io.github.pomian99.medical_clinic.dto.BookingSummaryDto;
+import io.github.pomian99.medical_clinic.dto.DoctorDto;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.exception.VisitAlreadyBookedException;
-import io.github.pomian99.medical_clinic.mapper.DoctorMapper;
 import io.github.pomian99.medical_clinic.mapper.VisitMapper;
 import io.github.pomian99.medical_clinic.model.Doctor;
 import io.github.pomian99.medical_clinic.model.Patient;
@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -50,11 +51,10 @@ class VisitBookingFacadeTest {
     @BeforeEach
     void setUp() {
         VisitMapper visitMapper = Mappers.getMapper(VisitMapper.class);
-        DoctorMapper doctorMapper = Mappers.getMapper(DoctorMapper.class);
 
         visitBookingFacade = new VisitBookingFacade(
             visitService, patientService, doctorService,
-            visitMapper, doctorMapper
+            visitMapper
         );
     }
 
@@ -78,7 +78,9 @@ class VisitBookingFacadeTest {
         when(patientService.findById(1L)).thenReturn(
             new PatientDto(1L, "jankow@poczta.pl", "Jan", "Kowalski", null, null, "Jan Kowalski")
         );
-        when(doctorService.findById(2L)).thenReturn(doctor);
+        when(doctorService.findById(2L)).thenReturn(
+            new DoctorDto(2L, null, null, "Marek", null, null, List.of())
+        );
         when(visitService.countFreeSlots(2L, DAY)).thenReturn(5L);
 
         // when
