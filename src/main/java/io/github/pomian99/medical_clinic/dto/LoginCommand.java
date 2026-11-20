@@ -9,4 +9,8 @@ public record LoginCommand(
     @NotBlank(message = "Password cannot be blank")
     String password
 ) {
+    @Override
+    public String toString() {
+        return "LoginCommand[email=" + email + ", password=***]";
+    }
 }

@@ -59,4 +59,13 @@ public record PatientCreateCommand(
         @Past(message = "Birthday must be a date in the past")
         LocalDate birthday
 ) {
+    @Override
+    public String toString() {
+        return "PatientCreateCommand[email=" + email
+            + ", password=***, idCardNo=***"
+            + ", firstName=" + firstName
+            + ", lastName=" + lastName
+            + ", phoneNumber=" + phoneNumber
+            + ", birthday=" + birthday + "]";
+    }
 }

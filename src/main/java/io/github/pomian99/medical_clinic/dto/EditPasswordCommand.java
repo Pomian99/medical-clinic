@@ -19,4 +19,8 @@ public record EditPasswordCommand(
         @Pattern(regexp = PASSWORD_REGEX, message = PASSWORD_PATTERN_MESSAGE)
         String password
 ) {
+    @Override
+    public String toString() {
+        return "EditPasswordCommand[password=***]";
+    }
 }
