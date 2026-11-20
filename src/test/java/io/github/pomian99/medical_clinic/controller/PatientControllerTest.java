@@ -7,15 +7,19 @@ import io.github.pomian99.medical_clinic.mapper.PatientMapperImpl;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.model.User;
 import io.github.pomian99.medical_clinic.service.PatientService;
+import org.hibernate.exception.ConstraintViolationException;
+import org.hibernate.exception.ConstraintViolationException.ConstraintKind;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -241,6 +245,38 @@ class PatientControllerTest {
     }
 
     @Test
+    void createPatient_idCardNoTakenInDatabase_returnsConflictWithoutValue() throws Exception {
+        // given
+        when(patientService.create(any())).thenThrow(constraintViolation(ConstraintKind.UNIQUE));
+
+        // when
+        var result = mockMvc.perform(post("/patients")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(VALID_BODY));
+
+        // then
+        result.andExpect(status().isConflict())
+            .andExpect(jsonPath("$.detail").value("The request conflicts with data already stored"))
+            .andExpect(content().string(not(containsString("id_card_no"))))
+            .andExpect(content().string(not(containsString("ABC123456"))));
+    }
+
+    @Test
+    void createPatient_notNullViolatedInDatabase_returnsInternalError() throws Exception {
+        // given
+        when(patientService.create(any())).thenThrow(constraintViolation(ConstraintKind.NOT_NULL));
+
+        // when
+        var result = mockMvc.perform(post("/patients")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(VALID_BODY));
+
+        // then
+        result.andExpect(status().isInternalServerError())
+            .andExpect(jsonPath("$.detail").value("Unknown error"));
+    }
+
+    @Test
     void createPatient_invalidJson_returnsBadRequest() throws Exception {
         // when
         var result = mockMvc.perform(post("/patients")
@@ -328,5 +364,20 @@ class PatientControllerTest {
         // then
         result.andExpect(status().isMethodNotAllowed())
             .andExpect(jsonPath("$.detail").value("Method DELETE is not supported here"));
+    }
+
+    private static DataIntegrityViolationException constraintViolation(ConstraintKind kind) {
+        SQLException sqlException = new SQLException(
+            "ERROR: duplicate key value violates unique constraint \"uk3usu2gl5shfee2u3f4gfw4w3p\""
+                + " Detail: Key (id_card_no)=(ABC123456) already exists."
+        );
+        ConstraintViolationException violation = new ConstraintViolationException(
+            "could not execute statement",
+            sqlException,
+            "insert into patients (id_card_no) values (?)",
+            kind,
+            "uk3usu2gl5shfee2u3f4gfw4w3p"
+        );
+        return new DataIntegrityViolationException(violation.getMessage(), violation);
     }
 }

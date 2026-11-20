@@ -1,7 +1,10 @@
 package io.github.pomian99.medical_clinic.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
+import org.hibernate.exception.ConstraintViolationException.ConstraintKind;
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -46,6 +49,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 HttpStatus.CONFLICT,
                 "The resource was changed by another request at the same time. Fetch it again and retry."
         );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrity(DataIntegrityViolationException exception) {
+        if (exception.getCause() instanceof ConstraintViolationException violation
+            && (violation.getKind() == ConstraintKind.UNIQUE || violation.getKind() == ConstraintKind.FOREIGN_KEY)) {
+            log.warn("Request conflicts with stored data: {} constraint {}", violation.getKind(), violation.getConstraintName());
+            return ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                "The request conflicts with data already stored"
+            );
+        }
+        return handleUnknown(exception);
     }
 
     @Override
