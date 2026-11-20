@@ -2,7 +2,6 @@ package io.github.pomian99.medical_clinic.controller;
 
 import io.github.pomian99.medical_clinic.dto.UserCreateCommand;
 import io.github.pomian99.medical_clinic.dto.UserDto;
-import io.github.pomian99.medical_clinic.mapper.UserMapper;
 import io.github.pomian99.medical_clinic.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,12 +31,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
-    private final UserMapper mapper;
 
     @Operation(summary = "List all users")
     @GetMapping
     public List<UserDto> getUsers() {
-        return mapper.toDto(userService.findAll());
+        return userService.findAll();
     }
 
     @Operation(summary = "Find user with given email")
@@ -52,7 +50,7 @@ public class UserController {
     })
     @GetMapping(params = "email")
     public UserDto getUserByEmail(@RequestParam String email) {
-        return mapper.toDto(userService.findByEmail(email));
+        return userService.findByEmail(email);
     }
 
     @Operation(summary = "Find user with given id")
@@ -73,7 +71,7 @@ public class UserController {
     })
     @GetMapping(path = "/{id}")
     public UserDto getUserById(@PathVariable long id) {
-        return mapper.toDto(userService.findById(id));
+        return userService.findById(id);
     }
 
     @Operation(
@@ -101,7 +99,7 @@ public class UserController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto createUser(@Valid @RequestBody UserCreateCommand command) {
-        return mapper.toDto(userService.create(command));
+        return userService.create(command);
     }
 
     @Operation(

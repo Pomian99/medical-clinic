@@ -1,6 +1,7 @@
 package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.UserCreateCommand;
+import io.github.pomian99.medical_clinic.dto.UserDto;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
 import io.github.pomian99.medical_clinic.exception.UserInUseException;
 import io.github.pomian99.medical_clinic.exception.UserNotFoundException;
@@ -28,24 +29,26 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public List<UserDto> findAll() {
+        return mapper.toDto(userRepository.findAll());
     }
 
     @Transactional(readOnly = true)
-    public User findById(long id) {
-        return userRepository.findById(id)
+    public UserDto findById(long id) {
+        User user = userRepository.findById(id)
             .orElseThrow(() -> new UserNotFoundException(id));
+        return mapper.toDto(user);
     }
 
     @Transactional(readOnly = true)
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
+    public UserDto findByEmail(String email) {
+        User user = userRepository.findByEmail(email)
             .orElseThrow(UserNotFoundException::new);
+        return mapper.toDto(user);
     }
 
     @Transactional
-    public User create(UserCreateCommand command) {
+    public UserDto create(UserCreateCommand command) {
         // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
         if (userRepository.existsByEmail(command.email())) {
@@ -57,7 +60,7 @@ public class UserService {
 
         User saved = userRepository.save(user);
         log.info("Created user {}", saved.getId());
-        return saved;
+        return mapper.toDto(saved);
     }
 
     @Transactional
