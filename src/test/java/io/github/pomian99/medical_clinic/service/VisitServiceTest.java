@@ -1,6 +1,7 @@
 package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
+import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.exception.DoctorNotFoundException;
 import io.github.pomian99.medical_clinic.exception.InvalidSortPropertyException;
 import io.github.pomian99.medical_clinic.exception.InvalidVisitException;
@@ -214,10 +215,11 @@ class VisitServiceTest {
         when(patientRepository.findById(2L)).thenReturn(Optional.of(patient));
 
         // when
-        Visit result = visitService.book(1L, 2L);
+        VisitDto result = visitService.book(1L, 2L);
 
         // then
-        assertSame(patient, result.getPatient());
+        assertSame(patient, visit.getPatient());
+        assertEquals(2L, result.patientId());
     }
 
     @Test
@@ -310,17 +312,19 @@ class VisitServiceTest {
     }
 
     @Test
-    void findAll_allowedSort_returnsRepositoryPage() {
+    void findAll_allowedSort_returnsPageOfDtos() {
         // given
         PageRequest pageable = PageRequest.of(1, 5, Sort.by("startsAt").descending());
         Page<Visit> page = new PageImpl<>(List.of(Visit.builder().id(6L).build()), pageable, 12);
         when(visitRepository.findAll(pageable)).thenReturn(page);
 
         // when
-        Page<Visit> result = visitService.findAll(pageable);
+        Page<VisitDto> result = visitService.findAll(pageable);
 
         // then
-        assertSame(page, result);
+        assertEquals(6L, result.getContent().get(0).id());
+        assertEquals(12, result.getTotalElements());
+        assertEquals(1, result.getNumber());
     }
 
     @Test

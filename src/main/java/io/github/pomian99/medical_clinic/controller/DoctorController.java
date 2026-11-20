@@ -4,7 +4,6 @@ import io.github.pomian99.medical_clinic.dto.DoctorCreateCommand;
 import io.github.pomian99.medical_clinic.dto.DoctorDto;
 import io.github.pomian99.medical_clinic.dto.SubstitutionCommand;
 import io.github.pomian99.medical_clinic.dto.VisitDto;
-import io.github.pomian99.medical_clinic.mapper.VisitMapper;
 import io.github.pomian99.medical_clinic.service.DoctorService;
 import io.github.pomian99.medical_clinic.service.VisitService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,7 +34,6 @@ import java.util.List;
 public class DoctorController {
     private final DoctorService doctorService;
     private final VisitService visitService;
-    private final VisitMapper visitMapper;
 
     @Operation(summary = "List all doctors")
     @GetMapping
@@ -174,7 +172,7 @@ public class DoctorController {
     })
     @PostMapping("/{id}/substitutions")
     public List<VisitDto> substitute(@PathVariable long id, @Valid @RequestBody SubstitutionCommand command) {
-        return visitMapper.toDto(visitService.substitute(id, command.substituteId()));
+        return visitService.substitute(id, command.substituteId());
     }
 
     @Operation(

@@ -5,7 +5,6 @@ import io.github.pomian99.medical_clinic.dto.PageResponse;
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
 import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.facade.VisitBookingFacade;
-import io.github.pomian99.medical_clinic.mapper.VisitMapper;
 import io.github.pomian99.medical_clinic.service.VisitService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -38,7 +37,6 @@ import java.util.List;
 public class VisitController {
     private final VisitService visitService;
     private final VisitBookingFacade bookingFacade;
-    private final VisitMapper mapper;
 
     @Operation(
         summary = "List all visits page by page",
@@ -49,7 +47,7 @@ public class VisitController {
     public PageResponse<VisitDto> getVisits(
         @PageableDefault(size = 20, sort = {"startsAt", "id"}) Pageable pageable
     ) {
-        return PageResponse.from(visitService.findAll(pageable).map(mapper::toDto));
+        return PageResponse.from(visitService.findAll(pageable));
     }
 
     @Operation(
@@ -68,7 +66,7 @@ public class VisitController {
     })
     @GetMapping(params = "doctorId")
     public List<VisitDto> getVisitsByDoctorId(@RequestParam long doctorId) {
-        return mapper.toDto(visitService.findAllByDoctorId(doctorId));
+        return visitService.findAllByDoctorId(doctorId);
     }
 
     @Operation(
@@ -87,7 +85,7 @@ public class VisitController {
     })
     @GetMapping("/patient/{patientId}")
     public List<VisitDto> getVisitsByPatientId(@PathVariable long patientId) {
-        return mapper.toDto(visitService.findAllByPatientId(patientId));
+        return visitService.findAllByPatientId(patientId);
     }
 
     @Operation(
@@ -119,7 +117,7 @@ public class VisitController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public VisitDto createVisit(@Valid @RequestBody VisitCreateCommand command) {
-        return mapper.toDto(visitService.create(command));
+        return visitService.create(command);
     }
 
     @Operation(

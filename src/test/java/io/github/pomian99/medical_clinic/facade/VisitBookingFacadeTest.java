@@ -3,19 +3,15 @@ package io.github.pomian99.medical_clinic.facade;
 import io.github.pomian99.medical_clinic.dto.BookingSummaryDto;
 import io.github.pomian99.medical_clinic.dto.DoctorDto;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
+import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.exception.VisitAlreadyBookedException;
-import io.github.pomian99.medical_clinic.mapper.VisitMapper;
-import io.github.pomian99.medical_clinic.model.Doctor;
-import io.github.pomian99.medical_clinic.model.Patient;
-import io.github.pomian99.medical_clinic.model.Visit;
 import io.github.pomian99.medical_clinic.service.DoctorService;
 import io.github.pomian99.medical_clinic.service.PatientService;
 import io.github.pomian99.medical_clinic.service.VisitService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mapstruct.factory.Mappers;
 import org.mockito.InOrder;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -46,35 +42,15 @@ class VisitBookingFacadeTest {
     @Mock
     DoctorService doctorService;
 
+    @InjectMocks
     VisitBookingFacade visitBookingFacade;
-
-    @BeforeEach
-    void setUp() {
-        VisitMapper visitMapper = Mappers.getMapper(VisitMapper.class);
-
-        visitBookingFacade = new VisitBookingFacade(
-            visitService, patientService, doctorService,
-            visitMapper
-        );
-    }
 
     @Test
     void book_visitFree_returnsBookingSummaryDto() {
         // given
-        Patient patient = Patient.builder()
-            .id(1L)
-            .firstName("Jan")
-            .build();
-        Doctor doctor = new Doctor();
-        doctor.setId(2L);
-        doctor.setFirstName("Marek");
-        Visit visit = Visit.builder()
-            .id(3L)
-            .doctor(doctor)
-            .patient(patient)
-            .startsAt(DAY.atTime(8, 0))
-            .build();
-        when(visitService.book(3L, 1L)).thenReturn(visit);
+        when(visitService.book(3L, 1L)).thenReturn(
+            new VisitDto(3L, 2L, 1L, DAY.atTime(8, 0), DAY.atTime(8, 30))
+        );
         when(patientService.findById(1L)).thenReturn(
             new PatientDto(1L, "jankow@poczta.pl", "Jan", "Kowalski", null, null, "Jan Kowalski")
         );

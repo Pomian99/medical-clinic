@@ -8,7 +8,6 @@ import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.VisitAlreadyBookedException;
 import io.github.pomian99.medical_clinic.facade.VisitBookingFacade;
-import io.github.pomian99.medical_clinic.mapper.VisitMapperImpl;
 import io.github.pomian99.medical_clinic.model.Specialization;
 import io.github.pomian99.medical_clinic.service.VisitService;
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(VisitController.class)
-@Import({VisitMapperImpl.class, SecurityConfig.class})
+@Import(SecurityConfig.class)
 @WithMockUser(roles = "PATIENT")
 class VisitControllerTest {
 

@@ -1,6 +1,7 @@
 package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
+import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.exception.DoctorNotFoundException;
 import io.github.pomian99.medical_clinic.exception.InvalidSubstitutionException;
 import io.github.pomian99.medical_clinic.exception.InvalidSortPropertyException;
@@ -44,7 +45,7 @@ public class VisitService {
     private final Clock clock;
 
     @Transactional
-    public Visit create(VisitCreateCommand command) {
+    public VisitDto create(VisitCreateCommand command) {
         validateSlot(command.startsAt(), command.endsAt());
 
         Doctor doctor = doctorRepository.findById(command.doctorId())
@@ -61,11 +62,11 @@ public class VisitService {
 
         Visit saved = visitRepository.save(visit);
         log.info("Created visit {} for doctor {}: {} - {}", saved.getId(), doctor.getId(), saved.getStartsAt(), saved.getEndsAt());
-        return saved;
+        return mapper.toDto(saved);
     }
 
     @Transactional
-    public Visit book(long visitId, long patientId) {
+    public VisitDto book(long visitId, long patientId) {
         Visit visit = visitRepository.findById(visitId)
                 .orElseThrow(() -> new VisitNotFoundException(visitId));
         Patient patient = patientRepository.findById(patientId)
@@ -80,11 +81,11 @@ public class VisitService {
 
         visit.setPatient(patient);
         log.info("Booked visit {} for patient {}", visitId, patientId);
-        return visit;
+        return mapper.toDto(visit);
     }
 
     @Transactional
-    public List<Visit> substitute(long doctorId, long substituteId) {
+    public List<VisitDto> substitute(long doctorId, long substituteId) {
         if (doctorId == substituteId) {
             throw new InvalidSubstitutionException(doctorId);
         }
@@ -102,23 +103,23 @@ public class VisitService {
             visit.setDoctor(substitute);
         }
         log.info("Moved {} visits from doctor {} to doctor {}", visits.size(), doctorId, substituteId);
-        return visits;
+        return mapper.toDto(visits);
     }
 
     @Transactional(readOnly = true)
-    public Page<Visit> findAll(Pageable pageable) {
+    public Page<VisitDto> findAll(Pageable pageable) {
         validateSort(pageable.getSort());
-        return visitRepository.findAll(pageable);
+        return visitRepository.findAll(pageable).map(mapper::toDto);
     }
 
     @Transactional(readOnly = true)
-    public List<Visit> findAllByDoctorId(long id) {
-        return visitRepository.findAllByDoctorId(id);
+    public List<VisitDto> findAllByDoctorId(long id) {
+        return mapper.toDto(visitRepository.findAllByDoctorId(id));
     }
 
     @Transactional(readOnly = true)
-    public List<Visit> findAllByPatientId(long id) {
-        return visitRepository.findAllByPatientId(id);
+    public List<VisitDto> findAllByPatientId(long id) {
+        return mapper.toDto(visitRepository.findAllByPatientId(id));
     }
 
     @Transactional(readOnly = true)
