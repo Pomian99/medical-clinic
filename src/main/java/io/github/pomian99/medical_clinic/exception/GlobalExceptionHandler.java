@@ -1,18 +1,25 @@
 package io.github.pomian99.medical_clinic.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.TypeMismatchException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Comparator;
@@ -20,7 +27,7 @@ import java.util.List;
 
 @RestControllerAdvice
 @Slf4j
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(MedicalClinicException.class)
     public ProblemDetail handleMedicalClinic(MedicalClinicException exception) {
@@ -39,64 +46,121 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleValidation(MethodArgumentNotValidException exception) {
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+        MethodArgumentNotValidException exception,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
         List<FieldViolation> errors = exception.getFieldErrors().stream()
-                .sorted(Comparator.comparing(FieldError::getField))
-                .map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))
-                .toList();
+            .sorted(Comparator.comparing(FieldError::getField))
+            .map(error -> new FieldViolation(error.getField(), error.getDefaultMessage()))
+            .toList();
         log.warn("Request rejected: {} validation rules failed", errors.size());
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST,
-                "Request body failed validation"
+            status,
+            "Request body failed validation"
         );
         problem.setProperty("errors", errors);
-        return problem;
+        return handleExceptionInternal(exception, problem, headers, status, request);
     }
 
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException exception) {
-        log.warn("Wrong type in path variable: {}", exception.getName());
-        return ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST,
-                "Path variable " + exception.getName() + " has a wrong type"
+    @Override
+    protected ResponseEntity<Object> handleTypeMismatch(
+        TypeMismatchException exception,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
+        log.warn("Wrong type in path variable: {}", exception.getPropertyName());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            status,
+            "Path variable " + exception.getPropertyName() + " has a wrong type"
         );
+        return handleExceptionInternal(exception, problem, headers, status, request);
     }
 
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ProblemDetail handleMissingParameter(MissingServletRequestParameterException exception) {
+    @Override
+    protected ResponseEntity<Object> handleMissingServletRequestParameter(
+        MissingServletRequestParameterException exception,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
         log.warn("Missing request parameter: {}", exception.getParameterName());
-        return ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST,
-                "Request parameter " + exception.getParameterName() + " is missing"
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            status,
+            "Request parameter " + exception.getParameterName() + " is missing"
         );
+        return handleExceptionInternal(exception, problem, headers, status, request);
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ProblemDetail handleUnreadable(HttpMessageNotReadableException exception) {
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(
+        HttpMessageNotReadableException exception,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
         log.warn("Unreadable request body");
-        return ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST,
-                "Request body is not valid JSON"
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            status,
+            "Request body is not valid JSON"
         );
+        return handleExceptionInternal(exception, problem, headers, status, request);
     }
 
-    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ProblemDetail handleMethodNotSupported(HttpRequestMethodNotSupportedException exception) {
+    @Override
+    protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(
+        HttpRequestMethodNotSupportedException exception,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
         log.warn("Method not supported: {}", exception.getMethod());
-        return ProblemDetail.forStatusAndDetail(
-            HttpStatus.METHOD_NOT_ALLOWED,
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            status,
             "Method " + exception.getMethod() + " is not supported here"
         );
+        return handleExceptionInternal(exception, problem, headers, status, request);
     }
 
-    @ExceptionHandler(NoResourceFoundException.class)
-    public ProblemDetail handleNoRoute(NoResourceFoundException exception) {
+    @Override
+    protected ResponseEntity<Object> handleHttpMediaTypeNotSupported(
+        HttpMediaTypeNotSupportedException exception,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
+        log.warn("Unsupported content type: {}", exception.getContentType());
+        return super.handleHttpMediaTypeNotSupported(exception, headers, status, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleHttpMediaTypeNotAcceptable(
+        HttpMediaTypeNotAcceptableException exception,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
+        log.warn("No acceptable media type, supported: {}", exception.getSupportedMediaTypes());
+        return super.handleHttpMediaTypeNotAcceptable(exception, headers, status, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleNoResourceFoundException(
+        NoResourceFoundException exception,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
         log.warn("Route not found: {}", exception.getResourcePath());
-        return ProblemDetail.forStatusAndDetail(
-                HttpStatus.NOT_FOUND,
-                "No such endpoint"
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            status,
+            "No such endpoint"
         );
+        return handleExceptionInternal(exception, problem, headers, status, request);
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -106,6 +170,21 @@ public class GlobalExceptionHandler {
             HttpStatus.UNAUTHORIZED,
             "wrong e-mail or password"
         );
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(
+        Exception exception,
+        Object body,
+        HttpHeaders headers,
+        HttpStatusCode statusCode,
+        WebRequest request
+    ) {
+        if (statusCode.is5xxServerError()) {
+            log.error("Unhandled exception", exception);
+            body = ProblemDetail.forStatusAndDetail(statusCode, "Unknown error");
+        }
+        return super.handleExceptionInternal(exception, body, headers, statusCode, request);
     }
 
     @ExceptionHandler(Exception.class)

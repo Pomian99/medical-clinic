@@ -150,6 +150,29 @@ class PatientControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "PATIENT")
+    void getPatientById_xmlRequested_returnsNotAcceptable() throws Exception {
+        // given
+        Patient patient = Patient.builder()
+            .id(1L)
+            .firstName("Jan")
+            .user(
+                User.builder()
+                    .email("jankow@poczta.pl")
+                    .build()
+            )
+            .build();
+        when(patientService.findById(1L)).thenReturn(patient);
+
+        // when
+        var result = mockMvc.perform(get("/patients/1")
+            .accept(MediaType.APPLICATION_XML));
+
+        // then
+        result.andExpect(status().isNotAcceptable());
+    }
+
+    @Test
     void createPatient_validBody_returnsCreated() throws Exception {
         // given
         Patient patient = Patient.builder()
@@ -227,6 +250,19 @@ class PatientControllerTest {
         // then
         result.andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.detail").value("Request body is not valid JSON"));
+        verify(patientService, never()).create(any());
+    }
+
+    @Test
+    void createPatient_plainTextBody_returnsUnsupportedMediaType() throws Exception {
+        // when
+        var result = mockMvc.perform(post("/patients")
+            .contentType(MediaType.TEXT_PLAIN)
+            .content(VALID_BODY));
+
+        // then
+        result.andExpect(status().isUnsupportedMediaType())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
         verify(patientService, never()).create(any());
     }
 
