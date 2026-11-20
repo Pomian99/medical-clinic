@@ -2,7 +2,6 @@ package io.github.pomian99.medical_clinic.controller;
 
 import io.github.pomian99.medical_clinic.dto.FacilityCreateCommand;
 import io.github.pomian99.medical_clinic.dto.FacilityDto;
-import io.github.pomian99.medical_clinic.mapper.FacilityMapper;
 import io.github.pomian99.medical_clinic.service.FacilityService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,12 +29,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FacilityController {
     private final FacilityService facilityService;
-    private final FacilityMapper mapper;
 
     @Operation(summary = "List all facilities")
     @GetMapping
     public List<FacilityDto> getFacilities() {
-        return mapper.toDto(facilityService.findAll());
+        return facilityService.findAll();
     }
 
     @Operation(summary = "Find facility with given id")
@@ -56,7 +54,7 @@ public class FacilityController {
     })
     @GetMapping("/{id}")
     public FacilityDto getFacilityById(@PathVariable long id) {
-        return mapper.toDto(facilityService.findById(id));
+        return facilityService.findById(id);
     }
 
     @Operation(
@@ -82,6 +80,6 @@ public class FacilityController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public FacilityDto createFacility(@Valid @RequestBody FacilityCreateCommand command) {
-        return mapper.toDto(facilityService.create(command));
+        return facilityService.create(command);
     }
 }
