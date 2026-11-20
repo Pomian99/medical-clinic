@@ -254,6 +254,34 @@ class PatientControllerTest {
     }
 
     @Test
+    void createPatient_birthdayInWrongFormat_returnsFieldError() throws Exception {
+        // given
+        String body = """
+            {
+                "email": "jankow@poczta.pl",
+                "password": "Secret123!",
+                "idCardNo": "ABC123456",
+                "firstName": "Jan",
+                "lastName": "Kowalski",
+                "phoneNumber": "123456789",
+                "birthday": "31-12-1990"
+            }
+            """;
+
+        // when
+        var result = mockMvc.perform(post("/patients")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body));
+
+        // then
+        result.andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.detail").value("Request body has a field with a wrong type or format"))
+            .andExpect(jsonPath("$.errors[0].field").value("birthday"))
+            .andExpect(content().string(not(containsString("31-12-1990"))));
+        verify(patientService, never()).create(any());
+    }
+
+    @Test
     void createPatient_plainTextBody_returnsUnsupportedMediaType() throws Exception {
         // when
         var result = mockMvc.perform(post("/patients")

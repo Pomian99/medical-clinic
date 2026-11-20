@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.exc.MismatchedInputException;
 
 import java.util.Comparator;
 import java.util.List;
@@ -103,12 +105,37 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         HttpStatusCode status,
         WebRequest request
     ) {
+        if (exception.getCause() instanceof MismatchedInputException mismatch && !mismatch.getPath().isEmpty()) {
+            String field = fieldPath(mismatch.getPath());
+            log.warn("Request rejected: field {} has a wrong type or format", field);
+            ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                status,
+                "Request body has a field with a wrong type or format"
+            );
+            problem.setProperty("errors", List.of(new FieldViolation(field, "Wrong type or format")));
+            return handleExceptionInternal(exception, problem, headers, status, request);
+        }
         log.warn("Unreadable request body");
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
             status,
             "Request body is not valid JSON"
         );
         return handleExceptionInternal(exception, problem, headers, status, request);
+    }
+
+    private static String fieldPath(List<JacksonException.Reference> path) {
+        StringBuilder field = new StringBuilder();
+        for (JacksonException.Reference reference : path) {
+            if (reference.getPropertyName() != null) {
+                if (!field.isEmpty()) {
+                    field.append('.');
+                }
+                field.append(reference.getPropertyName());
+            } else {
+                field.append('[').append(reference.getIndex()).append(']');
+            }
+        }
+        return field.toString();
     }
 
     @Override
