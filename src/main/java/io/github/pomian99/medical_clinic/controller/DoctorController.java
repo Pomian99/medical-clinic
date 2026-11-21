@@ -144,9 +144,10 @@ public class DoctorController {
     }
 
     @Operation(
-            summary = "Move all visits of doctor to substitute",
-            description = "Visits move from the earliest one. If the substitute already has a visit "
-                    + "at the time of any of them, no visit is moved."
+            summary = "Move upcoming visits of doctor to substitute",
+            description = "Visits that have not started yet move, from the earliest one; past visits "
+                    + "stay with the doctor in the patients' history. If the substitute already has "
+                    + "a visit at the time of any of them, no visit is moved."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Visits moved, the moved visits are returned"),

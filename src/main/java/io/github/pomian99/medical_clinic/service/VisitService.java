@@ -100,7 +100,9 @@ public class VisitService {
         Doctor substitute = doctorRepository.findById(substituteId)
                 .orElseThrow(() -> new DoctorNotFoundException(substituteId));
 
-        List<Visit> visits = visitRepository.findAllByDoctorIdOrderByStartsAt(doctorId);
+        List<Visit> visits = visitRepository.findAllByDoctorIdAndStartsAtGreaterThanEqualOrderByStartsAt(
+            doctorId, LocalDateTime.now(clock)
+        );
         for (Visit visit : visits) {
             if (visitRepository.existsByDoctorIdAndStartsAtBeforeAndEndsAtAfter(substituteId, visit.getEndsAt(), visit.getStartsAt())) {
                 throw new VisitOverlapsException(substituteId, visit.getStartsAt(), visit.getEndsAt());

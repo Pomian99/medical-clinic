@@ -4,6 +4,7 @@ import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
 import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.exception.DoctorNotFoundException;
 import io.github.pomian99.medical_clinic.exception.InvalidSortPropertyException;
+import io.github.pomian99.medical_clinic.exception.InvalidSubstitutionException;
 import io.github.pomian99.medical_clinic.exception.InvalidVisitException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.PatientVisitOverlapsException;
@@ -410,6 +411,84 @@ class VisitServiceTest {
             exception.getMessage()
         );
         verify(visitRepository, never()).findAll(any(PageRequest.class));
+    }
+
+    @Test
+    void substitute_upcomingVisits_movesThemFromNowToSubstitute() {
+        // given
+        Doctor substitute = new Doctor();
+        substitute.setId(2L);
+        Visit upcoming = Visit.builder()
+            .id(5L)
+            .startsAt(NOW)
+            .endsAt(NOW.plusMinutes(30))
+            .build();
+        when(doctorRepository.existsById(1L)).thenReturn(true);
+        when(doctorRepository.findById(2L)).thenReturn(Optional.of(substitute));
+        when(visitRepository.findAllByDoctorIdAndStartsAtGreaterThanEqualOrderByStartsAt(1L, NOW))
+            .thenReturn(List.of(upcoming));
+
+        // when
+        List<VisitDto> result = visitService.substitute(1L, 2L);
+
+        // then
+        assertSame(substitute, upcoming.getDoctor());
+        assertEquals(List.of(5L), result.stream().map(VisitDto::id).toList());
+        assertEquals(2L, result.get(0).doctorId());
+    }
+
+    @Test
+    void substitute_substituteBusy_throwsVisitOverlapsAndMovesNothing() {
+        // given
+        Doctor doctor = new Doctor();
+        doctor.setId(1L);
+        Doctor substitute = new Doctor();
+        substitute.setId(2L);
+        Visit first = Visit.builder()
+            .id(5L)
+            .doctor(doctor)
+            .startsAt(NOW.plusDays(1))
+            .endsAt(NOW.plusDays(1).plusMinutes(30))
+            .build();
+        Visit second = Visit.builder()
+            .id(6L)
+            .doctor(doctor)
+            .startsAt(NOW.plusDays(2))
+            .endsAt(NOW.plusDays(2).plusMinutes(30))
+            .build();
+        when(doctorRepository.existsById(1L)).thenReturn(true);
+        when(doctorRepository.findById(2L)).thenReturn(Optional.of(substitute));
+        when(visitRepository.findAllByDoctorIdAndStartsAtGreaterThanEqualOrderByStartsAt(1L, NOW))
+            .thenReturn(List.of(first, second));
+        when(visitRepository.existsByDoctorIdAndStartsAtBeforeAndEndsAtAfter(2L, first.getEndsAt(), first.getStartsAt()))
+            .thenReturn(true);
+
+        // when
+        VisitOverlapsException exception = assertThrows(
+            VisitOverlapsException.class,
+            () -> visitService.substitute(1L, 2L)
+        );
+
+        // then
+        assertEquals(
+            "Doctor with id 2 already has a visit overlapping 2030-01-16T08:00 - 2030-01-16T08:30",
+            exception.getMessage()
+        );
+        assertSame(doctor, first.getDoctor());
+        assertSame(doctor, second.getDoctor());
+    }
+
+    @Test
+    void substitute_sameDoctor_throwsInvalidSubstitution() {
+        // when
+        InvalidSubstitutionException exception = assertThrows(
+            InvalidSubstitutionException.class,
+            () -> visitService.substitute(1L, 1L)
+        );
+
+        // then
+        assertEquals("Doctor with id 1 cannot substitute for themselves", exception.getMessage());
+        verify(visitRepository, never()).findAllByDoctorIdAndStartsAtGreaterThanEqualOrderByStartsAt(anyLong(), any());
     }
 
     @Test

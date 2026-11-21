@@ -11,6 +11,7 @@ import java.util.List;
 public interface VisitRepository extends JpaRepository<Visit, Long> {
     boolean existsByDoctorId(long doctorId);
     List<Visit> findAllByDoctorIdOrderByStartsAt(long doctorId);
+    List<Visit> findAllByDoctorIdAndStartsAtGreaterThanEqualOrderByStartsAt(long doctorId, LocalDateTime from);
     List<Visit> findAllByPatientIdOrderByStartsAt(long patientId);
     boolean existsByPatientId(long patientId);
     boolean existsByDoctorIdAndStartsAtBeforeAndEndsAtAfter(long doctorId, LocalDateTime end, LocalDateTime start);
