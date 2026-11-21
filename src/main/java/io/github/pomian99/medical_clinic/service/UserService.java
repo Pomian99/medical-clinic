@@ -55,8 +55,12 @@ public class UserService {
             throw new UserAlreadyExistsException();
         }
 
-        User user = mapper.toEntity(command);
-        user.updatePassword(passwordEncoder.encode(command.password()));
+        User user = User.builder()
+            .email(command.email())
+            .rawPassword(command.password())
+            .passwordEncoder(passwordEncoder)
+            .role(command.role())
+            .build();
 
         User saved = userRepository.save(user);
         log.info("Created user {}", saved.getId());

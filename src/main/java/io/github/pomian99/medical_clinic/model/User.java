@@ -8,17 +8,16 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Setter
-@Builder
 @Entity
 @Table(name = "users")
 public class User {
@@ -29,6 +28,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Setter(AccessLevel.NONE)
     @Column(nullable = false)
     private String password;
 
@@ -37,8 +37,22 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    public void updatePassword(String password) {
-        this.password = password;
+    @Builder
+    private User(String email, String rawPassword, PasswordEncoder passwordEncoder, Role role) {
+        this.email = email;
+        this.password = encodePassword(rawPassword, passwordEncoder);
+        this.role = role;
+    }
+
+    public void changePassword(String rawPassword, PasswordEncoder passwordEncoder) {
+        this.password = encodePassword(rawPassword, passwordEncoder);
+    }
+
+    private static String encodePassword(String rawPassword, PasswordEncoder passwordEncoder) {
+        if (rawPassword == null || rawPassword.isBlank()) {
+            throw new IllegalArgumentException("Password cannot be blank");
+        }
+        return passwordEncoder.encode(rawPassword);
     }
 
     @Override

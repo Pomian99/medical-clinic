@@ -62,7 +62,8 @@ public class PatientService {
 
         User user = User.builder()
             .email(command.email())
-            .password(passwordEncoder.encode(command.password()))
+            .rawPassword(command.password())
+            .passwordEncoder(passwordEncoder)
             .role(Role.PATIENT)
             .build();
 
@@ -86,7 +87,7 @@ public class PatientService {
     @Transactional
     public PatientDto changePassword(long id, String password) {
         Patient patient = getPatient(id);
-        patient.updatePassword(passwordEncoder.encode(password));
+        patient.changePassword(password, passwordEncoder);
         log.info("Changed password of patient {}", id);
         return mapper.toDto(patient);
     }

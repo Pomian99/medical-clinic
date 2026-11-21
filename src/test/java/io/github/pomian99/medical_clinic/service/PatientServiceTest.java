@@ -114,6 +114,8 @@ class PatientServiceTest {
             .user(
                 User.builder()
                     .email("jankow@poczta.pl")
+                    .rawPassword("Secret123!")
+                    .passwordEncoder(passwordEncoder)
                     .build()
             )
             .build();
@@ -293,7 +295,8 @@ class PatientServiceTest {
             .user(
                 User.builder()
                     .email("jankow@poczta.pl")
-                    .password("OldSecret123!")
+                    .rawPassword("OldSecret123!")
+                    .passwordEncoder(passwordEncoder)
                     .build()
             )
             .build();

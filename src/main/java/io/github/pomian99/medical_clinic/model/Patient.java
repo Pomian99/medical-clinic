@@ -15,6 +15,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
 
@@ -47,8 +48,8 @@ public class Patient {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    public void updatePassword(String password) {
-         user.updatePassword(password);
+    public void changePassword(String rawPassword, PasswordEncoder passwordEncoder) {
+        user.changePassword(rawPassword, passwordEncoder);
     }
 
     @Override
