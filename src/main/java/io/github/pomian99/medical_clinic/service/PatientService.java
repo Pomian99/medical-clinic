@@ -3,6 +3,7 @@ package io.github.pomian99.medical_clinic.service;
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
+import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
 import io.github.pomian99.medical_clinic.mapper.PatientMapper;
@@ -58,6 +59,9 @@ public class PatientService {
         // so it cannot be handled by field-level validation annotations.
         if (userRepository.existsByEmail(command.email())) {
             throw new UserAlreadyExistsException();
+        }
+        if (patientRepository.existsByIdCardNo(command.idCardNo())) {
+            throw new PatientAlreadyExistsException();
         }
 
         User user = User.builder()

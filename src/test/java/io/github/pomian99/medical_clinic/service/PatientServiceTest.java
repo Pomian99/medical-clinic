@@ -3,6 +3,7 @@ package io.github.pomian99.medical_clinic.service;
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
+import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
 import io.github.pomian99.medical_clinic.mapper.PatientMapper;
@@ -238,6 +239,33 @@ class PatientServiceTest {
         // then
         assertEquals("User with this email already exists", exception.getMessage());
         verify(patientRepository, never()).save(any());
+    }
+
+    @Test
+    void create_idCardNoTaken_throwsPatientAlreadyExistsWithoutNumber() {
+        // given
+        PatientCreateCommand command = new PatientCreateCommand(
+            "jankow@poczta.pl",
+            "Secret123!",
+            "ABC123456",
+            "Jan",
+            "Kowalski",
+            "123456789",
+            LocalDate.of(1990, 5, 15)
+        );
+        when(userRepository.existsByEmail("jankow@poczta.pl")).thenReturn(false);
+        when(patientRepository.existsByIdCardNo("ABC123456")).thenReturn(true);
+
+        // when
+        PatientAlreadyExistsException exception = assertThrows(
+            PatientAlreadyExistsException.class,
+            () -> patientService.create(command)
+        );
+
+        // then
+        assertEquals("Patient with this ID card number already exists", exception.getMessage());
+        verify(patientRepository, never()).save(any());
+        verify(passwordEncoder, never()).encode(any());
     }
 
     @Test

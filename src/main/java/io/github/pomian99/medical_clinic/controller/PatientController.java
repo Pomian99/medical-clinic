@@ -95,7 +95,7 @@ public class PatientController {
                     )),
             @ApiResponse(
                     responseCode = "409",
-                    description = "This email is already taken",
+                    description = "This email or ID card number is already taken",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))

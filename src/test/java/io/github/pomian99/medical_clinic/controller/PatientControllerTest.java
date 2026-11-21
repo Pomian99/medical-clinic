@@ -2,6 +2,7 @@ package io.github.pomian99.medical_clinic.controller;
 
 import io.github.pomian99.medical_clinic.config.SecurityConfig;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
+import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
 import io.github.pomian99.medical_clinic.service.PatientService;
@@ -274,6 +275,22 @@ class PatientControllerTest {
         // then
         result.andExpect(status().isConflict())
             .andExpect(jsonPath("$.detail").value("User with this email already exists"));
+    }
+
+    @Test
+    void createPatient_idCardNoTaken_returnsConflictWithoutNumber() throws Exception {
+        // given
+        when(patientService.create(any())).thenThrow(new PatientAlreadyExistsException());
+
+        // when
+        var result = mockMvc.perform(post("/patients")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(VALID_BODY));
+
+        // then
+        result.andExpect(status().isConflict())
+            .andExpect(jsonPath("$.detail").value("Patient with this ID card number already exists"))
+            .andExpect(content().string(not(containsString("ABC123456"))));
     }
 
     @Test

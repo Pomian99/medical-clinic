@@ -25,4 +25,6 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
     List<Patient> searchByFragment(@Param("fragment") String fragment);
 
     boolean existsByUserId(long userId);
+
+    boolean existsByIdCardNo(String idCardNo);
 }
