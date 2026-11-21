@@ -137,6 +137,28 @@ class PatientServiceTest {
     }
 
     @Test
+    void findByEmail_emailInUppercase_looksUpLowercaseEmail() {
+        // given
+        Patient patient = Patient.builder()
+            .id(1L)
+            .user(
+                User.builder()
+                    .email("jankow@poczta.pl")
+                    .rawPassword("Secret123!")
+                    .passwordEncoder(passwordEncoder)
+                    .build()
+            )
+            .build();
+        when(patientRepository.findByUserEmail("jankow@poczta.pl")).thenReturn(Optional.of(patient));
+
+        // when
+        PatientDto result = patientService.findByEmail("JANKOW@Poczta.pl");
+
+        // then
+        assertEquals(1L, result.id());
+    }
+
+    @Test
     void findByEmail_patientNotFound_throwsPatientNotFound() {
         // given
         when(patientRepository.findByUserEmail("jankow@poczta.pl")).thenReturn(Optional.empty());
@@ -227,6 +249,31 @@ class PatientServiceTest {
         // given
         PatientCreateCommand command = new PatientCreateCommand(
             "jankow@poczta.pl",
+            "Secret123!",
+            "ABC123456",
+            "Jan",
+            "Kowalski",
+            "123456789",
+            LocalDate.of(1990, 5, 15)
+        );
+        when(userRepository.existsByEmail("jankow@poczta.pl")).thenReturn(true);
+
+        // when
+        UserAlreadyExistsException exception = assertThrows(
+            UserAlreadyExistsException.class,
+            () -> patientService.create(command)
+        );
+
+        // then
+        assertEquals("User with this email already exists", exception.getMessage());
+        verify(patientRepository, never()).save(any());
+    }
+
+    @Test
+    void create_emailTakenInOtherCase_throwsUserAlreadyExists() {
+        // given
+        PatientCreateCommand command = new PatientCreateCommand(
+            "JanKow@Poczta.pl",
             "Secret123!",
             "ABC123456",
             "Jan",

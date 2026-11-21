@@ -15,6 +15,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Locale;
+
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Setter
@@ -39,9 +41,17 @@ public class User {
 
     @Builder
     private User(String email, String rawPassword, PasswordEncoder passwordEncoder, Role role) {
-        this.email = email;
+        this.email = normalizeEmail(email);
         this.password = encodePassword(rawPassword, passwordEncoder);
         this.role = role;
+    }
+
+    public static String normalizeEmail(String email) {
+        return email == null ? null : email.toLowerCase(Locale.ROOT);
+    }
+
+    public void setEmail(String email) {
+        this.email = normalizeEmail(email);
     }
 
     public void changePassword(String rawPassword, PasswordEncoder passwordEncoder) {

@@ -42,7 +42,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserDto findByEmail(String email) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(User.normalizeEmail(email))
             .orElseThrow(UserNotFoundException::new);
         return mapper.toDto(user);
     }
@@ -51,7 +51,7 @@ public class UserService {
     public UserDto create(UserCreateCommand command) {
         // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
-        if (userRepository.existsByEmail(command.email())) {
+        if (userRepository.existsByEmail(User.normalizeEmail(command.email()))) {
             throw new UserAlreadyExistsException();
         }
 

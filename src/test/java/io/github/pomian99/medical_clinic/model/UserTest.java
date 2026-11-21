@@ -39,6 +39,35 @@ class UserTest {
         assertEquals("hash-Secret123!", user.getPassword());
     }
 
+    @Test
+    void builder_mixedCaseEmail_storesLowercaseEmail() {
+        // when
+        User user = User.builder()
+            .email("Jan.Kowalski@Poczta.PL")
+            .rawPassword("Secret123!")
+            .passwordEncoder(passwordEncoder)
+            .build();
+
+        // then
+        assertEquals("jan.kowalski@poczta.pl", user.getEmail());
+    }
+
+    @Test
+    void setEmail_mixedCaseEmail_storesLowercaseEmail() {
+        // given
+        User user = User.builder()
+            .email("jankow@poczta.pl")
+            .rawPassword("Secret123!")
+            .passwordEncoder(passwordEncoder)
+            .build();
+
+        // when
+        user.setEmail("Janusz.Nowak@Poczta.PL");
+
+        // then
+        assertEquals("janusz.nowak@poczta.pl", user.getEmail());
+    }
+
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = {"   "})

@@ -44,7 +44,7 @@ public class PatientService {
 
     @Transactional(readOnly = true)
     public PatientDto findByEmail(String email) {
-        Patient patient = patientRepository.findByUserEmail(email)
+        Patient patient = patientRepository.findByUserEmail(User.normalizeEmail(email))
                 .orElseThrow(PatientNotFoundException::new);
         return mapper.toDto(patient);
     }
@@ -60,7 +60,7 @@ public class PatientService {
     public PatientDto create(PatientCreateCommand command) {
         // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
-        if (userRepository.existsByEmail(command.email())) {
+        if (userRepository.existsByEmail(User.normalizeEmail(command.email()))) {
             throw new UserAlreadyExistsException();
         }
         if (patientRepository.existsByIdCardNo(command.idCardNo())) {
