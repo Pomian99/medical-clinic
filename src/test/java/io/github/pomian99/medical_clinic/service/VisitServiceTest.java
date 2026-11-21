@@ -26,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.time.Clock;
@@ -314,7 +315,7 @@ class VisitServiceTest {
     @Test
     void findAll_allowedSort_returnsPageOfDtos() {
         // given
-        PageRequest pageable = PageRequest.of(1, 5, Sort.by("startsAt").descending());
+        PageRequest pageable = PageRequest.of(1, 5, Sort.by(Sort.Order.desc("startsAt"), Sort.Order.asc("id")));
         Page<Visit> page = new PageImpl<>(List.of(Visit.builder().id(6L).build()), pageable, 12);
         when(visitRepository.findAll(pageable)).thenReturn(page);
 
@@ -325,6 +326,37 @@ class VisitServiceTest {
         assertEquals(6L, result.getContent().get(0).id());
         assertEquals(12, result.getTotalElements());
         assertEquals(1, result.getNumber());
+    }
+
+    @Test
+    void findAll_sortWithoutId_addsIdAsLastSortKey() {
+        // given
+        PageRequest pageable = PageRequest.of(1, 5, Sort.by("startsAt").descending());
+        when(visitRepository.findAll(any(Pageable.class))).thenReturn(Page.empty());
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+
+        // when
+        visitService.findAll(pageable);
+
+        // then
+        verify(visitRepository).findAll(captor.capture());
+        Pageable used = captor.getValue();
+        assertEquals(Sort.by(Sort.Order.desc("startsAt"), Sort.Order.asc("id")), used.getSort());
+        assertEquals(1, used.getPageNumber());
+        assertEquals(5, used.getPageSize());
+    }
+
+    @Test
+    void findAll_sortWithId_keepsClientSort() {
+        // given
+        PageRequest pageable = PageRequest.of(0, 20, Sort.by("id").descending());
+        when(visitRepository.findAll(any(Pageable.class))).thenReturn(Page.empty());
+
+        // when
+        visitService.findAll(pageable);
+
+        // then
+        verify(visitRepository).findAll(pageable);
     }
 
     @Test

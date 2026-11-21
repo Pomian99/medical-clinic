@@ -20,6 +20,7 @@ import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -109,7 +110,7 @@ public class VisitService {
     @Transactional(readOnly = true)
     public Page<VisitDto> findAll(Pageable pageable) {
         validateSort(pageable.getSort());
-        return visitRepository.findAll(pageable).map(mapper::toDto);
+        return visitRepository.findAll(withIdAsLastSortKey(pageable)).map(mapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -153,5 +154,13 @@ public class VisitService {
                 throw new InvalidSortPropertyException(order.getProperty(), SORTABLE_PROPERTIES);
             }
         }
+    }
+
+    private static Pageable withIdAsLastSortKey(Pageable pageable) {
+        Sort sort = pageable.getSort();
+        if (pageable.isUnpaged() || sort.getOrderFor("id") != null) {
+            return pageable;
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort.and(Sort.by("id")));
     }
 }
