@@ -2,6 +2,7 @@ package io.github.pomian99.medical_clinic.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -56,6 +57,7 @@ public record PatientCreateCommand(
         @Pattern(regexp = PHONE_NUMBER_REGEX, message = PHONE_NUMBER_PATTERN_MESSAGE)
         String phoneNumber,
 
+        @NotNull(message = "Birthday is required")
         @Past(message = "Birthday must be a date in the past")
         LocalDate birthday
 ) {

@@ -25,6 +25,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -207,6 +209,56 @@ class PatientControllerTest {
             .andExpect(jsonPath("$.errors[*].field", hasItem("firstName")))
             .andExpect(jsonPath("$.errors[*].message", hasItem("First name cannot be blank")));
         verify(patientService, never()).create(any());
+    }
+
+    @Test
+    void createPatient_noBirthday_returnsBadRequest() throws Exception {
+        // given
+        String body = """
+            {
+                "email": "jankow@poczta.pl",
+                "password": "Secret123!",
+                "idCardNo": "ABC123456",
+                "firstName": "Jan",
+                "lastName": "Kowalski",
+                "phoneNumber": "123456789"
+            }
+            """;
+
+        // when
+        var result = mockMvc.perform(post("/patients")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body));
+
+        // then
+        result.andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[*].field", hasItem("birthday")))
+            .andExpect(jsonPath("$.errors[*].message", hasItem("Birthday is required")));
+        verify(patientService, never()).create(any());
+    }
+
+    @Test
+    @WithMockUser(roles = "PATIENT")
+    void updatePatient_noBirthday_returnsBadRequestAndKeepsData() throws Exception {
+        // given
+        String body = """
+            {
+                "firstName": "Janusz",
+                "lastName": "Nowak",
+                "phoneNumber": "987654321"
+            }
+            """;
+
+        // when
+        var result = mockMvc.perform(put("/patients/1")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body));
+
+        // then
+        result.andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.errors[*].field", hasItem("birthday")))
+            .andExpect(jsonPath("$.errors[*].message", hasItem("Birthday is required")));
+        verify(patientService, never()).update(anyLong(), any());
     }
 
     @Test
