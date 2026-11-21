@@ -115,7 +115,7 @@ public class VisitService {
 
     @Transactional(readOnly = true)
     public List<VisitDto> findAllByDoctorId(long id) {
-        return mapper.toDto(visitRepository.findAllByDoctorId(id));
+        return mapper.toDto(visitRepository.findAllByDoctorIdOrderByStartsAt(id));
     }
 
     @Transactional(readOnly = true)

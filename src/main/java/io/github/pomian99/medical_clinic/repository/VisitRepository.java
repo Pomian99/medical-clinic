@@ -10,7 +10,6 @@ import java.util.List;
 
 public interface VisitRepository extends JpaRepository<Visit, Long> {
     boolean existsByDoctorId(long doctorId);
-    List<Visit> findAllByDoctorId(long doctorId);
     List<Visit> findAllByDoctorIdOrderByStartsAt(long doctorId);
     List<Visit> findAllByPatientIdOrderByStartsAt(long patientId);
     boolean existsByPatientId(long patientId);

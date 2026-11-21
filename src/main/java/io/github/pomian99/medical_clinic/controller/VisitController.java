@@ -52,7 +52,7 @@ public class VisitController {
 
     @Operation(
             summary = "List visits of doctor with given id",
-            description = "Returns both free slots and booked visits. "
+            description = "Returns both free slots and booked visits, from the earliest. "
                     + "A doctor without visits, or an unknown doctor id, gives an empty list."
     )
     @ApiResponses({

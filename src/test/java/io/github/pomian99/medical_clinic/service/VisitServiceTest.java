@@ -380,6 +380,28 @@ class VisitServiceTest {
     }
 
     @Test
+    void findAllByDoctorId_doctorHasVisits_returnsVisitsFromEarliest() {
+        // given
+        Visit earlier = Visit.builder()
+            .id(9L)
+            .startsAt(NOW.plusDays(1))
+            .endsAt(NOW.plusDays(1).plusMinutes(30))
+            .build();
+        Visit later = Visit.builder()
+            .id(4L)
+            .startsAt(NOW.plusDays(3))
+            .endsAt(NOW.plusDays(3).plusMinutes(30))
+            .build();
+        when(visitRepository.findAllByDoctorIdOrderByStartsAt(1L)).thenReturn(List.of(earlier, later));
+
+        // when
+        List<VisitDto> result = visitService.findAllByDoctorId(1L);
+
+        // then
+        assertEquals(List.of(9L, 4L), result.stream().map(VisitDto::id).toList());
+    }
+
+    @Test
     void findAllByPatientId_patientExists_returnsVisitsFromEarliest() {
         // given
         Visit earlier = Visit.builder()
