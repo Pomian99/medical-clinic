@@ -7,6 +7,7 @@ import io.github.pomian99.medical_clinic.exception.InvalidSubstitutionException;
 import io.github.pomian99.medical_clinic.exception.InvalidSortPropertyException;
 import io.github.pomian99.medical_clinic.exception.InvalidVisitException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
+import io.github.pomian99.medical_clinic.exception.PatientVisitOverlapsException;
 import io.github.pomian99.medical_clinic.exception.VisitAlreadyBookedException;
 import io.github.pomian99.medical_clinic.exception.VisitNotFoundException;
 import io.github.pomian99.medical_clinic.exception.VisitOverlapsException;
@@ -78,6 +79,9 @@ public class VisitService {
         }
         if (!visit.isFree()) {
             throw new VisitAlreadyBookedException(visitId);
+        }
+        if (visitRepository.existsByPatientIdAndStartsAtBeforeAndEndsAtAfter(patientId, visit.getEndsAt(), visit.getStartsAt())) {
+            throw new PatientVisitOverlapsException(patientId, visit.getStartsAt(), visit.getEndsAt());
         }
 
         visit.setPatient(patient);

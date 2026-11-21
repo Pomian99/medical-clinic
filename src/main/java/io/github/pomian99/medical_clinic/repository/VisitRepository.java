@@ -14,6 +14,7 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
     List<Visit> findAllByPatientIdOrderByStartsAt(long patientId);
     boolean existsByPatientId(long patientId);
     boolean existsByDoctorIdAndStartsAtBeforeAndEndsAtAfter(long doctorId, LocalDateTime end, LocalDateTime start);
+    boolean existsByPatientIdAndStartsAtBeforeAndEndsAtAfter(long patientId, LocalDateTime end, LocalDateTime start);
 
     @Query("""
         select count(v) from Visit v

@@ -6,6 +6,7 @@ import io.github.pomian99.medical_clinic.exception.DoctorNotFoundException;
 import io.github.pomian99.medical_clinic.exception.InvalidSortPropertyException;
 import io.github.pomian99.medical_clinic.exception.InvalidVisitException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
+import io.github.pomian99.medical_clinic.exception.PatientVisitOverlapsException;
 import io.github.pomian99.medical_clinic.exception.VisitAlreadyBookedException;
 import io.github.pomian99.medical_clinic.exception.VisitNotFoundException;
 import io.github.pomian99.medical_clinic.exception.VisitOverlapsException;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -311,6 +313,37 @@ class VisitServiceTest {
         // then
         assertEquals("Visit with id 1 is already booked", exception.getMessage());
         assertSame(bookedPatient, visit.getPatient());
+    }
+
+    @Test
+    void book_patientHasOverlappingVisit_throwsPatientVisitOverlaps() {
+        // given
+        LocalDateTime startsAt = NOW.plusDays(1);
+        LocalDateTime endsAt = startsAt.plusMinutes(30);
+        Visit visit = Visit.builder()
+            .id(1L)
+            .startsAt(startsAt)
+            .endsAt(endsAt)
+            .build();
+        Patient patient = Patient.builder()
+            .id(2L)
+            .build();
+        when(visitRepository.findById(1L)).thenReturn(Optional.of(visit));
+        when(patientRepository.findById(2L)).thenReturn(Optional.of(patient));
+        when(visitRepository.existsByPatientIdAndStartsAtBeforeAndEndsAtAfter(2L, endsAt, startsAt)).thenReturn(true);
+
+        // when
+        PatientVisitOverlapsException exception = assertThrows(
+            PatientVisitOverlapsException.class,
+            () -> visitService.book(1L, 2L)
+        );
+
+        // then
+        assertEquals(
+            "Patient with id 2 already has a visit overlapping 2030-01-16T08:00 - 2030-01-16T08:30",
+            exception.getMessage()
+        );
+        assertNull(visit.getPatient());
     }
 
     @Test
