@@ -4,6 +4,7 @@ import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
+import io.github.pomian99.medical_clinic.exception.PatientHasVisitsException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
 import io.github.pomian99.medical_clinic.mapper.PatientMapper;
@@ -12,11 +13,13 @@ import io.github.pomian99.medical_clinic.model.Role;
 import io.github.pomian99.medical_clinic.model.User;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
+import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,8 +31,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -43,6 +46,9 @@ class PatientServiceTest {
     UserRepository userRepository;
 
     @Mock
+    VisitRepository visitRepository;
+
+    @Mock
     PasswordEncoder passwordEncoder;
 
     PatientService patientService;
@@ -50,7 +56,7 @@ class PatientServiceTest {
     @BeforeEach
     void setUp() {
         PatientMapper mapper = Mappers.getMapper(PatientMapper.class);
-        patientService = new PatientService(patientRepository, userRepository, mapper, passwordEncoder);
+        patientService = new PatientService(patientRepository, userRepository, visitRepository, mapper, passwordEncoder);
     }
 
     @Test
@@ -355,21 +361,54 @@ class PatientServiceTest {
     }
 
     @Test
-    void deleteById_patientExists_removesFromRepository() {
+    void deleteById_patientWithoutVisits_deletesPatientThenAccount() {
         // given
-        when(patientRepository.existsById(1L)).thenReturn(true);
+        User user = User.builder()
+            .email("jankow@poczta.pl")
+            .rawPassword("Secret123!")
+            .passwordEncoder(passwordEncoder)
+            .build();
+        Patient patient = Patient.builder()
+            .id(1L)
+            .user(user)
+            .build();
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        when(visitRepository.existsByPatientId(1L)).thenReturn(false);
 
         // when
         patientService.deleteById(1L);
 
         // then
-        verify(patientRepository, times(1)).deleteById(1L);
+        InOrder inOrder = inOrder(patientRepository, userRepository);
+        inOrder.verify(patientRepository).delete(patient);
+        inOrder.verify(userRepository).delete(user);
+    }
+
+    @Test
+    void deleteById_patientHasVisits_throwsPatientHasVisits() {
+        // given
+        Patient patient = Patient.builder()
+            .id(1L)
+            .build();
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        when(visitRepository.existsByPatientId(1L)).thenReturn(true);
+
+        // when
+        PatientHasVisitsException exception = assertThrows(
+            PatientHasVisitsException.class,
+            () -> patientService.deleteById(1L)
+        );
+
+        // then
+        assertEquals("Patient with id 1 has visits and cannot be deleted", exception.getMessage());
+        verify(patientRepository, never()).delete(any());
+        verify(userRepository, never()).delete(any());
     }
 
     @Test
     void deleteById_patientNotFound_throwsPatientNotFound() {
         // given
-        when(patientRepository.existsById(1L)).thenReturn(false);
+        when(patientRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when
         PatientNotFoundException exception = assertThrows(
@@ -379,6 +418,7 @@ class PatientServiceTest {
 
         // then
         assertEquals("Patient with id 1 not found", exception.getMessage());
-        verify(patientRepository, never()).deleteById(any());
+        verify(patientRepository, never()).delete(any());
+        verify(userRepository, never()).delete(any());
     }
 }

@@ -3,6 +3,7 @@ package io.github.pomian99.medical_clinic.controller;
 import io.github.pomian99.medical_clinic.config.SecurityConfig;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
+import io.github.pomian99.medical_clinic.exception.PatientHasVisitsException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
 import io.github.pomian99.medical_clinic.service.PatientService;
@@ -402,6 +403,20 @@ class PatientControllerTest {
         // then
         result.andExpect(status().isNotFound())
             .andExpect(jsonPath("$.detail").value("Patient with id 1 not found"));
+    }
+
+    @Test
+    @WithMockUser(roles = "PATIENT")
+    void deletePatient_patientHasVisits_returnsConflict() throws Exception {
+        // given
+        doThrow(new PatientHasVisitsException(1L)).when(patientService).deleteById(1L);
+
+        // when
+        var result = mockMvc.perform(delete("/patients/1"));
+
+        // then
+        result.andExpect(status().isConflict())
+            .andExpect(jsonPath("$.detail").value("Patient with id 1 has visits and cannot be deleted"));
     }
 
     @Test

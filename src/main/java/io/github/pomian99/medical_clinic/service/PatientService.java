@@ -4,6 +4,7 @@ import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
 import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
+import io.github.pomian99.medical_clinic.exception.PatientHasVisitsException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
 import io.github.pomian99.medical_clinic.mapper.PatientMapper;
@@ -12,6 +13,7 @@ import io.github.pomian99.medical_clinic.model.Role;
 import io.github.pomian99.medical_clinic.model.User;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
+import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,6 +28,7 @@ import java.util.List;
 public class PatientService {
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
+    private final VisitRepository visitRepository;
     private final PatientMapper mapper;
     private final PasswordEncoder passwordEncoder;
 
@@ -98,11 +101,15 @@ public class PatientService {
 
     @Transactional
     public void deleteById(long id) {
-        if (!patientRepository.existsById(id)) {
-            throw new PatientNotFoundException(id);
+        Patient patient = getPatient(id);
+        if (visitRepository.existsByPatientId(id)) {
+            throw new PatientHasVisitsException(id);
         }
-        patientRepository.deleteById(id);
-        log.info("Deleted patient {}", id);
+
+        User user = patient.getUser();
+        patientRepository.delete(patient);
+        userRepository.delete(user);
+        log.info("Deleted patient {} and account {}", id, user.getId());
     }
 
     private Patient getPatient(long id) {

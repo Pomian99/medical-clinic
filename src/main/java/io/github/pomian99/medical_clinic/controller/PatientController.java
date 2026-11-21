@@ -156,9 +156,12 @@ public class PatientController {
         return patientService.changePassword(id, command.password());
     }
 
-    @Operation(summary = "Delete patient with given id")
+    @Operation(
+            summary = "Delete patient with given id",
+            description = "Only a patient without visits can be deleted. The account is deleted with the patient."
+    )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Patient deleted"),
+            @ApiResponse(responseCode = "204", description = "Patient and account deleted"),
             @ApiResponse(
                     responseCode = "400",
                     description = "The id in the path is not a number",
@@ -168,6 +171,12 @@ public class PatientController {
             @ApiResponse(
                     responseCode = "404",
                     description = "No patient with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "The patient has visits, so it cannot be deleted",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))
