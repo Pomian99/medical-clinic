@@ -324,13 +324,9 @@ class PatientServiceTest {
     @Test
     void update_patientExists_changesDataAndKeepsIdCardNo() {
         // given
-        Patient patient = Patient.builder()
-            .id(1L)
-            .idCardNo("ABC123456")
-            .firstName("Jan")
-            .lastName("Kowalski")
-            .build();
+        Patient patient = patientWithAccount("jankow@poczta.pl");
         PatientUpdateCommand command = new PatientUpdateCommand(
+            "jankow@poczta.pl",
             "Janusz",
             "Nowak",
             "987654321",
@@ -345,12 +341,62 @@ class PatientServiceTest {
         assertEquals("Janusz", result.firstName());
         assertEquals("Nowak", result.lastName());
         assertEquals("ABC123456", patient.getIdCardNo());
+        verify(userRepository, never()).existsByEmail(any());
+    }
+
+    @Test
+    void update_freeEmail_changesAccountEmail() {
+        // given
+        Patient patient = patientWithAccount("jankow@poczta.pl");
+        PatientUpdateCommand command = new PatientUpdateCommand(
+            "Janusz.Nowak@Poczta.pl",
+            "Janusz",
+            "Nowak",
+            "987654321",
+            LocalDate.of(1990, 5, 15)
+        );
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        when(userRepository.existsByEmail("janusz.nowak@poczta.pl")).thenReturn(false);
+
+        // when
+        PatientDto result = patientService.update(1L, command);
+
+        // then
+        assertEquals("janusz.nowak@poczta.pl", result.email());
+        assertEquals("janusz.nowak@poczta.pl", patient.getUser().getEmail());
+    }
+
+    @Test
+    void update_emailOfOtherAccount_throwsUserAlreadyExistsAndKeepsData() {
+        // given
+        Patient patient = patientWithAccount("jankow@poczta.pl");
+        PatientUpdateCommand command = new PatientUpdateCommand(
+            "anna.nowak@example.com",
+            "Janusz",
+            "Nowak",
+            "987654321",
+            LocalDate.of(1990, 5, 15)
+        );
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        when(userRepository.existsByEmail("anna.nowak@example.com")).thenReturn(true);
+
+        // when
+        UserAlreadyExistsException exception = assertThrows(
+            UserAlreadyExistsException.class,
+            () -> patientService.update(1L, command)
+        );
+
+        // then
+        assertEquals("User with this email already exists", exception.getMessage());
+        assertEquals("Jan", patient.getFirstName());
+        assertEquals("jankow@poczta.pl", patient.getUser().getEmail());
     }
 
     @Test
     void update_patientNotFound_throwsPatientNotFound() {
         // given
         PatientUpdateCommand command = new PatientUpdateCommand(
+            "jankow@poczta.pl",
             "Janusz",
             "Nowak",
             "987654321",
@@ -467,5 +513,20 @@ class PatientServiceTest {
         assertEquals("Patient with id 1 not found", exception.getMessage());
         verify(patientRepository, never()).delete(any());
         verify(userRepository, never()).delete(any());
+    }
+
+    private Patient patientWithAccount(String email) {
+        User user = User.builder()
+            .email(email)
+            .rawPassword("Secret123!")
+            .passwordEncoder(passwordEncoder)
+            .build();
+        return Patient.builder()
+            .id(1L)
+            .idCardNo("ABC123456")
+            .firstName("Jan")
+            .lastName("Kowalski")
+            .user(user)
+            .build();
     }
 }

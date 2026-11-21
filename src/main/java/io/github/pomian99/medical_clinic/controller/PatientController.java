@@ -106,7 +106,11 @@ public class PatientController {
         return patientService.create(command);
     }
 
-    @Operation(summary = "Update data of patient with given id")
+    @Operation(
+            summary = "Update data of patient with given id",
+            description = "Replaces all data except the password and the ID card number. "
+                    + "The email is changed on the patient's account."
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Patient data updated"),
             @ApiResponse(
@@ -119,6 +123,12 @@ public class PatientController {
             @ApiResponse(
                     responseCode = "404",
                     description = "No patient with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "This email belongs to another account",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))

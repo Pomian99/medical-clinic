@@ -245,6 +245,7 @@ class PatientControllerTest {
         // given
         String body = """
             {
+                "email": "jankow@poczta.pl",
                 "firstName": "Janusz",
                 "lastName": "Nowak",
                 "phoneNumber": "987654321"
@@ -261,6 +262,31 @@ class PatientControllerTest {
             .andExpect(jsonPath("$.errors[*].field", hasItem("birthday")))
             .andExpect(jsonPath("$.errors[*].message", hasItem("Birthday is required")));
         verify(patientService, never()).update(anyLong(), any());
+    }
+
+    @Test
+    @WithMockUser(roles = "PATIENT")
+    void updatePatient_emailOfOtherAccount_returnsConflict() throws Exception {
+        // given
+        String body = """
+            {
+                "email": "anna.nowak@example.com",
+                "firstName": "Janusz",
+                "lastName": "Nowak",
+                "phoneNumber": "987654321",
+                "birthday": "1990-05-15"
+            }
+            """;
+        when(patientService.update(anyLong(), any())).thenThrow(new UserAlreadyExistsException());
+
+        // when
+        var result = mockMvc.perform(put("/patients/1")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body));
+
+        // then
+        result.andExpect(status().isConflict())
+            .andExpect(jsonPath("$.detail").value("User with this email already exists"));
     }
 
     @Test

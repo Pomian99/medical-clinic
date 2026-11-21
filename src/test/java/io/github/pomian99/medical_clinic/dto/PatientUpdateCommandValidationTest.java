@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PatientUpdateCommandValidationTest {
 
+    static final String EMAIL = "jankow@poczta.pl";
     static final LocalDate BIRTHDAY = LocalDate.of(1990, 5, 15);
 
     static ValidatorFactory factory;
@@ -38,7 +39,7 @@ class PatientUpdateCommandValidationTest {
     @Test
     void validate_allFieldsValid_noViolations() {
         // given
-        PatientUpdateCommand command = new PatientUpdateCommand("Janusz", "Nowak", "987654321", BIRTHDAY);
+        PatientUpdateCommand command = new PatientUpdateCommand(EMAIL, "Janusz", "Nowak", "987654321", BIRTHDAY);
 
         // when
         Set<ConstraintViolation<PatientUpdateCommand>> violations = validator.validate(command);
@@ -48,9 +49,34 @@ class PatientUpdateCommandValidationTest {
     }
 
     @Test
+    void validate_blankEmail_reportsEmail() {
+        // given
+        PatientUpdateCommand command = new PatientUpdateCommand("", "Janusz", "Nowak", "987654321", BIRTHDAY);
+
+        // when
+        Set<ConstraintViolation<PatientUpdateCommand>> violations = validator.validate(command);
+
+        // then
+        assertEquals(Set.of("email"), fields(violations));
+        assertTrue(messages(violations, "email").contains("Email cannot be blank"));
+    }
+
+    @Test
+    void validate_emailWithoutAt_reportsEmailMustBeValid() {
+        // given
+        PatientUpdateCommand command = new PatientUpdateCommand("to-nie-jest-email", "Janusz", "Nowak", "987654321", BIRTHDAY);
+
+        // when
+        Set<ConstraintViolation<PatientUpdateCommand>> violations = validator.validate(command);
+
+        // then
+        assertEquals(Set.of("Email must be valid"), messages(violations, "email"));
+    }
+
+    @Test
     void validate_blankFirstName_reportsFirstName() {
         // given
-        PatientUpdateCommand command = new PatientUpdateCommand("", "Nowak", "987654321", BIRTHDAY);
+        PatientUpdateCommand command = new PatientUpdateCommand(EMAIL, "", "Nowak", "987654321", BIRTHDAY);
 
         // when
         Set<ConstraintViolation<PatientUpdateCommand>> violations = validator.validate(command);
@@ -63,7 +89,7 @@ class PatientUpdateCommandValidationTest {
     @Test
     void validate_lastNameWithDigit_reportsLastNamePattern() {
         // given
-        PatientUpdateCommand command = new PatientUpdateCommand("Janusz", "Nowak1", "987654321", BIRTHDAY);
+        PatientUpdateCommand command = new PatientUpdateCommand(EMAIL, "Janusz", "Nowak1", "987654321", BIRTHDAY);
 
         // when
         Set<ConstraintViolation<PatientUpdateCommand>> violations = validator.validate(command);
@@ -75,7 +101,7 @@ class PatientUpdateCommandValidationTest {
     @Test
     void validate_phoneNumberTooShort_reportsPhoneNumberPattern() {
         // given
-        PatientUpdateCommand command = new PatientUpdateCommand("Janusz", "Nowak", "500", BIRTHDAY);
+        PatientUpdateCommand command = new PatientUpdateCommand(EMAIL, "Janusz", "Nowak", "500", BIRTHDAY);
 
         // when
         Set<ConstraintViolation<PatientUpdateCommand>> violations = validator.validate(command);
@@ -87,7 +113,7 @@ class PatientUpdateCommandValidationTest {
     @Test
     void validate_noBirthday_reportsBirthdayRequired() {
         // given
-        PatientUpdateCommand command = new PatientUpdateCommand("Janusz", "Nowak", "987654321", null);
+        PatientUpdateCommand command = new PatientUpdateCommand(EMAIL, "Janusz", "Nowak", "987654321", null);
 
         // when
         Set<ConstraintViolation<PatientUpdateCommand>> violations = validator.validate(command);
@@ -100,7 +126,7 @@ class PatientUpdateCommandValidationTest {
     void validate_birthdayTomorrow_reportsBirthdayInPast() {
         // given
         LocalDate tomorrow = LocalDate.now().plusDays(1);
-        PatientUpdateCommand command = new PatientUpdateCommand("Janusz", "Nowak", "987654321", tomorrow);
+        PatientUpdateCommand command = new PatientUpdateCommand(EMAIL, "Janusz", "Nowak", "987654321", tomorrow);
 
         // when
         Set<ConstraintViolation<PatientUpdateCommand>> violations = validator.validate(command);

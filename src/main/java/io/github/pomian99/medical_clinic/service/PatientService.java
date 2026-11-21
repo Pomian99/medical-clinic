@@ -85,8 +85,14 @@ public class PatientService {
     @Transactional
     public PatientDto update(long id, PatientUpdateCommand command) {
         Patient patient = getPatient(id);
+        User user = patient.getUser();
+        String email = User.normalizeEmail(command.email());
+        if (!user.getEmail().equals(email) && userRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException();
+        }
 
         mapper.update(patient, command);
+        user.setEmail(email);
         log.info("Updated patient {}", id);
         return mapper.toDto(patient);
     }
