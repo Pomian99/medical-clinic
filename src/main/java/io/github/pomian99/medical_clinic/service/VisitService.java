@@ -120,7 +120,10 @@ public class VisitService {
 
     @Transactional(readOnly = true)
     public List<VisitDto> findAllByPatientId(long id) {
-        return mapper.toDto(visitRepository.findAllByPatientId(id));
+        if (!patientRepository.existsById(id)) {
+            throw new PatientNotFoundException(id);
+        }
+        return mapper.toDto(visitRepository.findAllByPatientIdOrderByStartsAt(id));
     }
 
     @Transactional(readOnly = true)

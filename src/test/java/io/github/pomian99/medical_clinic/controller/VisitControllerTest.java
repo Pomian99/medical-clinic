@@ -24,6 +24,7 @@ import java.util.List;
 
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -88,6 +89,19 @@ class VisitControllerTest {
 
         // when
         var result = mockMvc.perform(patch("/visits/2/book/99"));
+
+        // then
+        result.andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.detail").value("Patient with id 99 not found"));
+    }
+
+    @Test
+    void getVisitsByPatientId_patientNotFound_returnsNotFound() throws Exception {
+        // given
+        when(visitService.findAllByPatientId(99L)).thenThrow(new PatientNotFoundException(99L));
+
+        // when
+        var result = mockMvc.perform(get("/visits/patient/99"));
 
         // then
         result.andExpect(status().isNotFound())

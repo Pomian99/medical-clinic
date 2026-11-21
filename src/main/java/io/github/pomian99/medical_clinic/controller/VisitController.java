@@ -71,14 +71,20 @@ public class VisitController {
 
     @Operation(
             summary = "List visits of patient with given id",
-            description = "Returns visits booked by the patient. "
-                    + "A patient without visits, or an unknown patient id, gives an empty list."
+            description = "Returns visits booked by the patient, from the earliest. "
+                    + "A patient without visits gives an empty list."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Visits of the patient"),
             @ApiResponse(
                     responseCode = "400",
                     description = "The id in the path is not a number",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "No patient with this id exists",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))

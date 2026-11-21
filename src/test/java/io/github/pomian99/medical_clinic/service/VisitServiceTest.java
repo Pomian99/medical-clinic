@@ -39,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -376,5 +377,57 @@ class VisitServiceTest {
             exception.getMessage()
         );
         verify(visitRepository, never()).findAll(any(PageRequest.class));
+    }
+
+    @Test
+    void findAllByPatientId_patientExists_returnsVisitsFromEarliest() {
+        // given
+        Visit earlier = Visit.builder()
+            .id(7L)
+            .startsAt(NOW.plusDays(1))
+            .endsAt(NOW.plusDays(1).plusMinutes(30))
+            .build();
+        Visit later = Visit.builder()
+            .id(3L)
+            .startsAt(NOW.plusDays(2))
+            .endsAt(NOW.plusDays(2).plusMinutes(30))
+            .build();
+        when(patientRepository.existsById(2L)).thenReturn(true);
+        when(visitRepository.findAllByPatientIdOrderByStartsAt(2L)).thenReturn(List.of(earlier, later));
+
+        // when
+        List<VisitDto> result = visitService.findAllByPatientId(2L);
+
+        // then
+        assertEquals(List.of(7L, 3L), result.stream().map(VisitDto::id).toList());
+    }
+
+    @Test
+    void findAllByPatientId_patientWithoutVisits_returnsEmptyList() {
+        // given
+        when(patientRepository.existsById(2L)).thenReturn(true);
+        when(visitRepository.findAllByPatientIdOrderByStartsAt(2L)).thenReturn(List.of());
+
+        // when
+        List<VisitDto> result = visitService.findAllByPatientId(2L);
+
+        // then
+        assertEquals(List.of(), result);
+    }
+
+    @Test
+    void findAllByPatientId_patientNotFound_throwsPatientNotFound() {
+        // given
+        when(patientRepository.existsById(99L)).thenReturn(false);
+
+        // when
+        PatientNotFoundException exception = assertThrows(
+            PatientNotFoundException.class,
+            () -> visitService.findAllByPatientId(99L)
+        );
+
+        // then
+        assertEquals("Patient with id 99 not found", exception.getMessage());
+        verify(visitRepository, never()).findAllByPatientIdOrderByStartsAt(anyLong());
     }
 }
