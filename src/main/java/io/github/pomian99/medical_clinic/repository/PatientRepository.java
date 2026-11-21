@@ -19,8 +19,9 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
     @EntityGraph(attributePaths = {"user"})
     @Query(value = """
             select p from Patient p
-            where lower(p.lastName) like lower(concat('%', :fragment, '%'))
-               or lower(p.firstName) like lower(concat('%', :fragment, '%'))
+            where lower(p.lastName) like lower(concat('%', :fragment, '%')) escape '!'
+               or lower(p.firstName) like lower(concat('%', :fragment, '%')) escape '!'
+            order by p.lastName, p.firstName, p.id
             """)
     List<Patient> searchByFragment(@Param("fragment") String fragment);
 

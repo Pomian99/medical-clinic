@@ -191,6 +191,31 @@ class PatientServiceTest {
     }
 
     @Test
+    void findByFragment_percentAndUnderscore_searchesForThemLiterally() {
+        // given
+        when(patientRepository.searchByFragment("50!%!_")).thenReturn(List.of());
+
+        // when
+        List<PatientDto> result = patientService.findByFragment("50%_");
+
+        // then
+        assertEquals(0, result.size());
+        verify(patientRepository).searchByFragment("50!%!_");
+    }
+
+    @Test
+    void findByFragment_escapeCharacter_escapesItFirst() {
+        // given
+        when(patientRepository.searchByFragment("a!!!%")).thenReturn(List.of());
+
+        // when
+        patientService.findByFragment("a!%");
+
+        // then
+        verify(patientRepository).searchByFragment("a!!!%");
+    }
+
+    @Test
     void create_newEmail_returnsPatientWithEmail() {
         // given
         PatientCreateCommand command = new PatientCreateCommand(

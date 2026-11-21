@@ -1,0 +1,28 @@
+info:
+  name: Search Patients By Percent Sign
+  type: http
+  seq: 14
+
+http:
+  method: GET
+  url: "{{baseUrl}}/patients?fragment=%25"
+  auth:
+    type: bearer
+    token: "{{adminToken}}"
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body
+      operator: isEmpty
+
+settings:
+  encodeUrl: false
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+docs: Expected 200 OK with an empty list. %25 is a percent sign, and no patient has one in the name; before the fix it matched every patient.

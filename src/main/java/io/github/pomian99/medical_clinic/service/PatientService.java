@@ -51,7 +51,7 @@ public class PatientService {
 
     @Transactional(readOnly = true)
     public List<PatientDto> findByFragment(String fragment) {
-        return mapper.toDto(patientRepository.searchByFragment(fragment));
+        return mapper.toDto(patientRepository.searchByFragment(escapeLikeWildcards(fragment)));
     }
 
     // Two inserts (users, then patients) must succeed or fail together: without a
@@ -121,5 +121,12 @@ public class PatientService {
     private Patient getPatient(long id) {
         return patientRepository.findById(id)
                 .orElseThrow(() -> new PatientNotFoundException(id));
+    }
+
+    private static String escapeLikeWildcards(String fragment) {
+        return fragment
+            .replace("!", "!!")
+            .replace("%", "!%")
+            .replace("_", "!_");
     }
 }
