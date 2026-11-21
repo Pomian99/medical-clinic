@@ -2,6 +2,7 @@ package io.github.pomian99.medical_clinic.controller;
 
 import io.github.pomian99.medical_clinic.dto.UserCreateCommand;
 import io.github.pomian99.medical_clinic.dto.UserDto;
+import io.github.pomian99.medical_clinic.dto.UserUpdateCommand;
 import io.github.pomian99.medical_clinic.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -100,6 +102,39 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto createUser(@Valid @RequestBody UserCreateCommand command) {
         return userService.create(command);
+    }
+
+    @Operation(
+            summary = "Update user with given id",
+            description = "Changes the email of the account; the patient or doctor on it keeps "
+                    + "using the new one. The role follows the patient or doctor attached to the "
+                    + "account, so it is not changed here."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User updated"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Request body failed validation or is not valid JSON, "
+                            + "or the id in the path is not a number",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "No user with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "This email belongs to another account",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
+    @PutMapping(path = "/{id}")
+    public UserDto updateUser(@PathVariable long id, @Valid @RequestBody UserUpdateCommand command) {
+        return userService.update(id, command);
     }
 
     @Operation(

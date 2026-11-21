@@ -2,6 +2,7 @@ package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.UserCreateCommand;
 import io.github.pomian99.medical_clinic.dto.UserDto;
+import io.github.pomian99.medical_clinic.dto.UserUpdateCommand;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
 import io.github.pomian99.medical_clinic.exception.UserInUseException;
 import io.github.pomian99.medical_clinic.exception.UserNotFoundException;
@@ -65,6 +66,20 @@ public class UserService {
         User saved = userRepository.save(user);
         log.info("Created user {}", saved.getId());
         return mapper.toDto(saved);
+    }
+
+    @Transactional
+    public UserDto update(long id, UserUpdateCommand command) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new UserNotFoundException(id));
+        String email = User.normalizeEmail(command.email());
+        if (!user.getEmail().equals(email) && userRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException();
+        }
+
+        user.setEmail(email);
+        log.info("Updated user {}", id);
+        return mapper.toDto(user);
     }
 
     @Transactional
