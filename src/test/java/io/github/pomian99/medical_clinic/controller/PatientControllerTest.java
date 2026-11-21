@@ -332,7 +332,7 @@ class PatientControllerTest {
 
         // then
         result.andExpect(status().isConflict())
-            .andExpect(jsonPath("$.detail").value("The request conflicts with data already stored"))
+            .andExpect(jsonPath("$.detail").value("Patient with this ID card number already exists"))
             .andExpect(content().string(not(containsString("id_card_no"))))
             .andExpect(content().string(not(containsString("ABC123456"))));
     }
@@ -458,7 +458,7 @@ class PatientControllerTest {
 
     private static DataIntegrityViolationException constraintViolation(ConstraintKind kind) {
         SQLException sqlException = new SQLException(
-            "ERROR: duplicate key value violates unique constraint \"uk3usu2gl5shfee2u3f4gfw4w3p\""
+            "ERROR: duplicate key value violates unique constraint \"uk_patients_id_card_no\""
                 + " Detail: Key (id_card_no)=(ABC123456) already exists."
         );
         ConstraintViolationException violation = new ConstraintViolationException(
@@ -466,7 +466,7 @@ class PatientControllerTest {
             sqlException,
             "insert into patients (id_card_no) values (?)",
             kind,
-            "uk3usu2gl5shfee2u3f4gfw4w3p"
+            "uk_patients_id_card_no"
         );
         return new DataIntegrityViolationException(violation.getMessage(), violation);
     }

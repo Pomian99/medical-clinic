@@ -29,10 +29,18 @@ import tools.jackson.databind.exc.MismatchedInputException;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    private static final Map<String, String> CONFLICT_MESSAGES = Map.of(
+        "uk_visits_doctor_id_starts_at", "The doctor already has a visit starting at this time",
+        "uk_users_email", "User with this email already exists",
+        "uk_patients_id_card_no", "Patient with this ID card number already exists",
+        "uk_facilities_name", "Facility with this name already exists"
+    );
 
     @ExceptionHandler(MedicalClinicException.class)
     public ProblemDetail handleMedicalClinic(MedicalClinicException exception) {
@@ -58,10 +66,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             log.warn("Request conflicts with stored data: {} constraint {}", violation.getKind(), violation.getConstraintName());
             return ProblemDetail.forStatusAndDetail(
                 HttpStatus.CONFLICT,
-                "The request conflicts with data already stored"
+                conflictMessage(violation.getConstraintName())
             );
         }
         return handleUnknown(exception);
+    }
+
+    private static String conflictMessage(String constraintName) {
+        if (constraintName != null) {
+            String name = constraintName.toLowerCase(Locale.ROOT);
+            for (Map.Entry<String, String> entry : CONFLICT_MESSAGES.entrySet()) {
+                if (name.contains(entry.getKey())) {
+                    return entry.getValue();
+                }
+            }
+        }
+        return "The request conflicts with data already stored";
     }
 
     @Override
