@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@Tag(name = "Users", description = "Medical clinic accounts (login data and role): create, read")
+@Tag(name = "Users", description = "Medical clinic accounts (login data and role): create, read, update, delete")
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -106,8 +106,8 @@ public class UserController {
             @ApiResponse(responseCode = "201", description = "User created"),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Request body failed validation or is not valid JSON "
-                            + "(an unknown role also makes it unreadable)",
+                    description = "Request body failed validation or is not valid JSON; "
+                            + "an unknown role is reported in errors under the role field",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     )),
@@ -159,7 +159,7 @@ public class UserController {
 
     @Operation(
             summary = "Delete user with given id",
-            description = "Only an account that no patient points to can be deleted."
+            description = "Only an account that no patient and no doctor points to can be deleted."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "User deleted"),
@@ -177,7 +177,7 @@ public class UserController {
                     )),
             @ApiResponse(
                     responseCode = "409",
-                    description = "The account belongs to a patient, so it cannot be deleted",
+                    description = "The account belongs to a patient or a doctor, so it cannot be deleted",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))

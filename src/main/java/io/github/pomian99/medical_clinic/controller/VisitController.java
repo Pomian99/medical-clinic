@@ -143,7 +143,8 @@ public class VisitController {
 
     @Operation(
             summary = "Book visit with given id for patient with given id",
-            description = "Assigns the patient to a free slot that has not started yet."
+            description = "Assigns the patient to a free slot that has not started yet. "
+                    + "A patient cannot have two visits at the same time, also with different doctors."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Visit booked, booking summary returned"),
@@ -161,7 +162,8 @@ public class VisitController {
                     )),
             @ApiResponse(
                     responseCode = "409",
-                    description = "The visit is already booked",
+                    description = "The visit is already booked (also when another booking of it won at the "
+                            + "same moment), or the patient already has a visit overlapping this one",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))
