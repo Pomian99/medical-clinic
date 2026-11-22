@@ -75,3 +75,51 @@ grep -rn 'cascade' src/main/java
 
 ### Co zrobiono
 Brak potrzebnych działań
+
+## Co się zmieniło (22.11.2026, po recenzji PR #31)
+
+Sekcje 1–4 opisują kod z chwili D1 (`4d0b84f`). Strony odwrotne `Doctor.visits`, `Facility.doctors`
+i `User.patient` wtedy istniały, a serwisy wołały `Patient.assignUser` i `Visit.assignDoctor`.
+Polecenia z sekcji 1, 2 i 4 dają na tym commicie to, co opisano (sprawdzone 22.11).
+
+Zmianę przyniosło D3 (`5c8cca6`), które usunęło wszystkie strony odwrotne. Tabela, którą D3 miało
+dopisać do sekcji 3, nie trafiła wtedy do notatki. Jest poniżej.
+
+### Strony odwrotne: kto je czytał (D3)
+
+| Pole | Kto je czytał przy D1 | Kto je zapisywał | Decyzja |
+|---|---|---|---|
+| `Doctor.visits` (`mappedBy = "doctor"`) | nikt: wizyty doktora czyta `VisitRepository.findAllByDoctorId`, a `DoctorMapper` miał `ignore` | druga linijka `Visit.assignDoctor` | usunięte |
+| `Facility.doctors` (`mappedBy = "facilities"`) | nikt: `FacilityMapper` miał `ignore`, a placówki doktora idą przez stronę właściciela `Doctor.facilities` | druga linijka `Doctor.addFacility` i `Doctor.removeFacility` | usunięte |
+| `User.patient` (`mappedBy = "user"`, `ALL`) | nikt: `UserService.deleteById` pyta `patientRepository.existsByUserId`, a `UserMapper` miał `ignore` | druga linijka `Patient.assignUser` | usunięte |
+
+Sposób sprawdzenia, na `4d0b84f`:
+
+```bash
+grep -rnE '\.(getVisits|getDoctors|getPatient)\(\)' src/main/java src/test/java
+```
+
+Wynik to tylko trzy zapisy: `facility.getDoctors().add(this)`, `facility.getDoctors().remove(this)`
+i `doctor.getVisits().add(this)`. Żaden kod, łącznie z testami, nie czytał tych pól.
+
+Decyzja jest świadoma: relacje są jednokierunkowe, bo żaden endpoint ani zapytanie nie nawiguje od
+strony odwrotnej. Strona odwrotna wraca dopiero razem z kodem, który ją czyta. W `5c8cca6` zniknęły
+trzy pola, ich `ignore` w maperach i druga linijka metod synchronizujących. `assignUser`
+i `assignDoctor` robiły już wtedy to samo co setter, więc usunąłem je w całości, a serwisy wróciły do
+`setUser` i `setDoctor`. `Doctor.addFacility` i `removeFacility` zostały, z jedną linijką na stronie
+właściciela.
+
+### Sekcje 1, 3 i 4 dziś
+
+- Sekcja 1: żadnej z trzech pętli nie da się już zamknąć, bo nie ma pól, przez które szły.
+  `grep -rn 'mappedBy' src/main/java` nic nie znajduje. Kontrolery dalej zwracają tylko DTO, a od
+  poprawek po recenzji DTO oddają też serwisy.
+- Sekcja 3: `Patient.assignUser` i `Visit.assignDoctor` nie istnieją. `PatientService.create` woła
+  `patient.setUser(user)`, a `VisitService.create` woła `visit.setDoctor(doctor)`. Bez strony
+  odwrotnej nie ma czego synchronizować.
+- Sekcja 4: kaskady są dwie, `Patient.user` (`PERSIST`) i `Doctor.user` (`PERSIST`, `MERGE`). Wiersza
+  z `User.patient` już nie ma. `DELETE /users/{id}` na koncie pacjenta albo doktora dalej daje 409,
+  bo odmawia `UserService.deleteById`. `DELETE /patients/{id}` usuwa dziś pacjenta, a potem jego
+  konto (3e91771). Robi to serwis, a nie kaskada. Pacjent z wizytami dostaje 409.
+- Wszystkie żądania z tabeli w sekcji 4 wymagają dziś tokenu JWT, poza `POST /patients`, które jest
+  tylko dla niezalogowanych.

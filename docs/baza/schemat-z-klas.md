@@ -53,3 +53,15 @@ limitów.
 
 Nie usunie kolumny ani tabeli: po usunięciu albo zmianie nazwy pola stara kolumna zostaje
 w bazie razem z danymi.
+
+## Co się zmieniło (22.11.2026)
+
+- Schematu nie zakłada już Hibernate: od MED-14 robi to Liquibase, a Hibernate tylko sprawdza encje
+  (`ddl-auto=validate`). `show-sql` też już nie ma (3eadf1f), więc DDL z początku notatki nie pojawi się
+  w logu.
+- Od MED-24 `email` i `password` są w tabeli `users`, a `patients` ma w ich miejsce unikalne `user_id`.
+- Wygenerowane nazwy ograniczeń zastąpił changeset 23 (poprawka po recenzji PR #31):
+  `uk3usu2gl5shfee2u3f4gfw4w3p` to dziś `uk_patients_id_card_no`, a e-mail pilnuje `uk_users_email`
+  w tabeli `users`.
+- `birthday` w bazie nadal dopuszcza `null`, ale od poprawek po recenzji API go wymaga (`@NotNull`
+  w `PatientCreateCommand` i `PatientUpdateCommand`).
