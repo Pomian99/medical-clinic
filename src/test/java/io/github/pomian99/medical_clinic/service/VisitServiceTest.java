@@ -32,6 +32,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -489,6 +490,34 @@ class VisitServiceTest {
         // then
         assertEquals("Doctor with id 1 cannot substitute for themselves", exception.getMessage());
         verify(visitRepository, never()).findAllByDoctorIdAndStartsAtGreaterThanEqualOrderByStartsAt(anyLong(), any());
+    }
+
+    @Test
+    void countFreeSlots_day_countsFromMidnightToNextMidnight() {
+        // given
+        LocalDate day = LocalDate.of(2030, 1, 20);
+        when(visitRepository.countFreeSlots(1L, day.atStartOfDay(), day.plusDays(1).atStartOfDay())).thenReturn(4L);
+
+        // when
+        long result = visitService.countFreeSlots(1L, day);
+
+        // then
+        assertEquals(4L, result);
+    }
+
+    @Test
+    void countFreeSlots_lastDayOfYear_endsAtMidnightOfNewYear() {
+        // given
+        LocalDate day = LocalDate.of(2030, 12, 31);
+        when(visitRepository.countFreeSlots(
+            1L, LocalDateTime.of(2030, 12, 31, 0, 0), LocalDateTime.of(2031, 1, 1, 0, 0)
+        )).thenReturn(0L);
+
+        // when
+        long result = visitService.countFreeSlots(1L, day);
+
+        // then
+        assertEquals(0L, result);
     }
 
     @Test
