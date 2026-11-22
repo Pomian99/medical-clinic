@@ -6,6 +6,8 @@ import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
 import io.github.pomian99.medical_clinic.service.PatientService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -36,28 +38,56 @@ import java.util.List;
 public class PatientController {
     private final PatientService patientService;
 
-    @Operation(summary = "List all patients")
+    @Operation(
+            summary = "List patients, or find them by email or by a fragment of the name",
+            description = "One path with three variants, chosen by the query parameter (send at most one):\n\n"
+                    + "- no parameter: all patients;\n"
+                    + "- `email`: the patient with this email, letter case ignored; one patient, not a list;\n"
+                    + "- `fragment`: patients whose first or last name contains the fragment, letter case "
+                    + "ignored, sorted by last name, first name and id; `%` and `_` are searched for literally.",
+            parameters = {
+                    @Parameter(
+                            name = "email",
+                            in = ParameterIn.QUERY,
+                            required = false,
+                            description = "Email of the patient; the response is one patient instead of a list",
+                            schema = @Schema(type = "string")
+                    ),
+                    @Parameter(
+                            name = "fragment",
+                            in = ParameterIn.QUERY,
+                            required = false,
+                            description = "Fragment of the first or last name",
+                            schema = @Schema(type = "string")
+                    )
+            }
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of patients, or one patient when email is given",
+                    content = @Content(
+                            schema = @Schema(oneOf = {PatientDto[].class, PatientDto.class})
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Only with email: no patient with this email exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
     @GetMapping
     public List<PatientDto> getPatients() {
         return patientService.findAll();
     }
 
-    @Operation(summary = "Find patient with given email")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Patient found"),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "No patient with this email exists",
-                    content = @Content(
-                            schema = @Schema(implementation = ProblemDetail.class)
-                    ))
-    })
+    @Operation(hidden = true)
     @GetMapping(params = "email")
     public PatientDto getPatientByEmail(@RequestParam String email) {
         return patientService.findByEmail(email);
     }
 
-    @Operation(summary = "Find patients by a fragment of first or last name (case-insensitive)")
+    @Operation(hidden = true)
     @GetMapping(params = "fragment")
     public List<PatientDto> getPatientsByFragment(@RequestParam String fragment) {
         return patientService.findByFragment(fragment);
