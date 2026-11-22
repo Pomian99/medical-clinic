@@ -5,6 +5,8 @@ import io.github.pomian99.medical_clinic.dto.UserDto;
 import io.github.pomian99.medical_clinic.dto.UserUpdateCommand;
 import io.github.pomian99.medical_clinic.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -34,22 +36,40 @@ import java.util.List;
 public class UserController {
     private final UserService userService;
 
-    @Operation(summary = "List all users")
+    @Operation(
+            summary = "List users, or find one by email",
+            description = "One path with two variants, chosen by the query parameter:\n\n"
+                    + "- no parameter: all accounts;\n"
+                    + "- `email`: the account with this email, letter case ignored; one account, not a list."
+                    + "\n\nThe response never contains the password.",
+            parameters = @Parameter(
+                    name = "email",
+                    in = ParameterIn.QUERY,
+                    required = false,
+                    description = "Email of the account; the response is one account instead of a list",
+                    schema = @Schema(type = "string")
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "A list of accounts, or one account when email is given",
+                    content = @Content(
+                            schema = @Schema(oneOf = {UserDto[].class, UserDto.class})
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Only with email: no account with this email exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
+                    ))
+    })
     @GetMapping
     public List<UserDto> getUsers() {
         return userService.findAll();
     }
 
-    @Operation(summary = "Find user with given email")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "User found"),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "No user with this email exists",
-                    content = @Content(
-                            schema = @Schema(implementation = ProblemDetail.class)
-                    ))
-    })
+    @Operation(hidden = true)
     @GetMapping(params = "email")
     public UserDto getUserByEmail(@RequestParam String email) {
         return userService.findByEmail(email);

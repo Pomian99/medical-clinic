@@ -7,6 +7,8 @@ import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.facade.VisitBookingFacade;
 import io.github.pomian99.medical_clinic.service.VisitService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -14,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -39,31 +42,43 @@ public class VisitController {
     private final VisitBookingFacade bookingFacade;
 
     @Operation(
-        summary = "List all visits page by page",
-        description = "Query parameters page (from 0), size and sort, e.g. ?page=1&size=5&sort=startsAt,desc. "
-            + "Without them: first page of 20 visits, sorted by startsAt, then id."
+        summary = "List all visits page by page, or all visits of one doctor",
+        description = "One path with two variants, chosen by the query parameters:\n\n"
+            + "- without `doctorId`: one page of all visits. `page` counts from 0, `size` is at most 100, "
+            + "`sort` takes startsAt, endsAt or id, e.g. `?page=1&size=5&sort=startsAt,desc`. "
+            + "Without them: first page of 20 visits, sorted by startsAt, then id; "
+            + "id is always added as the last sort key;\n"
+            + "- with `doctorId`: all visits of this doctor, free slots and booked ones, from the earliest, "
+            + "as a plain list (not a page; `page`, `size` and `sort` are ignored). "
+            + "A doctor without visits, or an unknown doctor id, gives an empty list.",
+        parameters = @Parameter(
+            name = "doctorId",
+            in = ParameterIn.QUERY,
+            required = false,
+            description = "Id of the doctor; the response is a plain list of their visits instead of a page",
+            schema = @Schema(type = "integer", format = "int64")
+        )
     )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "A page of visits, or a plain list of VisitDto when doctorId is given"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "doctorId is not a number, or sort uses a property other than startsAt, endsAt or id",
+            content = @Content(
+                schema = @Schema(implementation = ProblemDetail.class)
+            ))
+    })
     @GetMapping
     public PageResponse<VisitDto> getVisits(
-        @PageableDefault(size = 20, sort = {"startsAt", "id"}) Pageable pageable
+        @ParameterObject @PageableDefault(size = 20, sort = {"startsAt", "id"}) Pageable pageable
     ) {
         return PageResponse.from(visitService.findAll(pageable));
     }
 
-    @Operation(
-            summary = "List visits of doctor with given id",
-            description = "Returns both free slots and booked visits, from the earliest. "
-                    + "A doctor without visits, or an unknown doctor id, gives an empty list."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Visits of the doctor"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "The doctorId parameter is not a number",
-                    content = @Content(
-                            schema = @Schema(implementation = ProblemDetail.class)
-                    ))
-    })
+    @Operation(hidden = true)
     @GetMapping(params = "doctorId")
     public List<VisitDto> getVisitsByDoctorId(@RequestParam long doctorId) {
         return visitService.findAllByDoctorId(doctorId);
