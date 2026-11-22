@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -114,7 +115,11 @@ public class PatientController {
         return patientService.findById(id);
     }
 
-    @Operation(summary = "Create new patient")
+    @Operation(
+            summary = "Create new patient",
+            description = "Registration is for visitors who are not logged in: a request with an access token gets 403."
+    )
+    @SecurityRequirements
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Patient created"),
             @ApiResponse(
