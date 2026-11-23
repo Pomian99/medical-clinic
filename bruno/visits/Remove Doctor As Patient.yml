@@ -1,0 +1,25 @@
+info:
+  name: Remove Doctor As Patient
+  type: http
+  seq: 6
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/doctors/1"
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "403"
+
+docs: |-
+  Deleting a doctor is for the admin only. Anna's token is refused before the service checks the visits.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

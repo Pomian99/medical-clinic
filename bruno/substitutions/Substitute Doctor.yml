@@ -12,7 +12,9 @@ http:
       {
         "substituteId": {{substituteId}}
       }
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{adminToken}}"
 
 runtime:
   assertions:
