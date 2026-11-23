@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: "22"
+      author: kursant
+      changes:
+        - addUniqueConstraint:
+            tableName: visits
+            columnNames: doctor_id, starts_at
+            constraintName: uk_visits_doctor_id_starts_at
+      rollback:
+        - dropUniqueConstraint:
+            tableName: visits
+            constraintName: uk_visits_doctor_id_starts_at

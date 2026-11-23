@@ -17,7 +17,7 @@ public class AccountUserDetailsService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) {
-        User user = userRepository.findByEmail(email)
+        User user = userRepository.findByEmail(User.normalizeEmail(email))
             .orElseThrow(() -> new UsernameNotFoundException("No account for this email"));
 
         var account = org.springframework.security.core.userdetails.User

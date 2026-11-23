@@ -1,0 +1,35 @@
+info:
+  name: Create User
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/users"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Anna Nowak",
+        "username": "anowak",
+        "email": "anna.nowak@example.com"
+      }
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+    - expression: res.body.id
+      operator: eq
+      value: "11"
+
+docs: |-
+  JSONPlaceholder only pretends to save: it answers 201 with the next id (11), but stores nothing.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

@@ -1,19 +1,26 @@
 package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
+import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
+import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
+import io.github.pomian99.medical_clinic.exception.PatientHasVisitsException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
 import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.model.Role;
 import io.github.pomian99.medical_clinic.model.User;
+import io.github.pomian99.medical_clinic.repository.DoctorRepository;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
+import io.github.pomian99.medical_clinic.repository.VisitRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,11 +30,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,13 +47,22 @@ class PatientServiceTest {
     UserRepository userRepository;
 
     @Mock
-    PatientMapper mapper;
+    VisitRepository visitRepository;
+
+    @Mock
+    DoctorRepository doctorRepository;
 
     @Mock
     PasswordEncoder passwordEncoder;
 
-    @InjectMocks
     PatientService patientService;
+
+    @BeforeEach
+    void setUp() {
+        PatientMapper mapper = Mappers.getMapper(PatientMapper.class);
+        patientService = new PatientService(patientRepository, userRepository, visitRepository, doctorRepository,
+            mapper, passwordEncoder);
+    }
 
     @Test
     void findAll_twoPatientsExist_returnsBothPatients() {
@@ -63,11 +78,11 @@ class PatientServiceTest {
         when(patientRepository.findAll()).thenReturn(List.of(jan, anna));
 
         // when
-        List<Patient> result = patientService.findAll();
+        List<PatientDto> result = patientService.findAll();
 
         // then
         assertEquals(2, result.size());
-        assertEquals("Anna", result.get(1).getFirstName());
+        assertEquals("Anna", result.get(1).firstName());
     }
 
     @Test
@@ -81,10 +96,11 @@ class PatientServiceTest {
         when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
 
         // when
-        Patient result = patientService.findById(1L);
+        PatientDto result = patientService.findById(1L);
 
         // then
-        assertEquals("Jan", result.getFirstName());
+        assertEquals("Jan", result.firstName());
+        assertEquals("Jan Kowalski", result.fullName());
     }
 
     @Test
@@ -110,16 +126,41 @@ class PatientServiceTest {
             .user(
                 User.builder()
                     .email("jankow@poczta.pl")
+                    .rawPassword("Secret123!")
+                    .passwordEncoder(passwordEncoder)
                     .build()
             )
             .build();
         when(patientRepository.findByUserEmail("jankow@poczta.pl")).thenReturn(Optional.of(patient));
 
         // when
-        Patient result = patientService.findByEmail("jankow@poczta.pl");
+        PatientDto result = patientService.findByEmail("jankow@poczta.pl");
 
         // then
-        assertEquals(1L, result.getId());
+        assertEquals(1L, result.id());
+        assertEquals("jankow@poczta.pl", result.email());
+    }
+
+    @Test
+    void findByEmail_emailInUppercase_looksUpLowercaseEmail() {
+        // given
+        Patient patient = Patient.builder()
+            .id(1L)
+            .user(
+                User.builder()
+                    .email("jankow@poczta.pl")
+                    .rawPassword("Secret123!")
+                    .passwordEncoder(passwordEncoder)
+                    .build()
+            )
+            .build();
+        when(patientRepository.findByUserEmail("jankow@poczta.pl")).thenReturn(Optional.of(patient));
+
+        // when
+        PatientDto result = patientService.findByEmail("JANKOW@Poczta.pl");
+
+        // then
+        assertEquals(1L, result.id());
     }
 
     @Test
@@ -147,15 +188,40 @@ class PatientServiceTest {
         when(patientRepository.searchByFragment("Kowal")).thenReturn(List.of(patient));
 
         // when
-        List<Patient> result = patientService.findByFragment("Kowal");
+        List<PatientDto> result = patientService.findByFragment("Kowal");
 
         // then
         assertEquals(1, result.size());
-        assertEquals("Kowalski", result.get(0).getLastName());
+        assertEquals("Kowalski", result.get(0).lastName());
     }
 
     @Test
-    void create_newEmail_savesPatientWithAccount() {
+    void findByFragment_percentAndUnderscore_searchesForThemLiterally() {
+        // given
+        when(patientRepository.searchByFragment("50!%!_")).thenReturn(List.of());
+
+        // when
+        List<PatientDto> result = patientService.findByFragment("50%_");
+
+        // then
+        assertEquals(0, result.size());
+        verify(patientRepository).searchByFragment("50!%!_");
+    }
+
+    @Test
+    void findByFragment_escapeCharacter_escapesItFirst() {
+        // given
+        when(patientRepository.searchByFragment("a!!!%")).thenReturn(List.of());
+
+        // when
+        patientService.findByFragment("a!%");
+
+        // then
+        verify(patientRepository).searchByFragment("a!!!%");
+    }
+
+    @Test
+    void create_newEmail_returnsPatientWithEmail() {
         // given
         PatientCreateCommand command = new PatientCreateCommand(
             "jankow@poczta.pl",
@@ -166,22 +232,16 @@ class PatientServiceTest {
             "123456789",
             LocalDate.of(1990, 5, 15)
         );
-        Patient patient = Patient.builder()
-            .firstName("Jan")
-            .lastName("Kowalski")
-            .build();
         when(userRepository.existsByEmail("jankow@poczta.pl")).thenReturn(false);
-        when(mapper.toEntity(command)).thenReturn(patient);
-        when(patientRepository.save(patient)).thenReturn(patient);
+        when(patientRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(passwordEncoder.encode("Secret123!")).thenReturn("hash-Secret123!");
 
         // when
-        Patient result = patientService.create(command);
+        PatientDto result = patientService.create(command);
 
         // then
-        assertEquals("jankow@poczta.pl", result.getUser().getEmail());
-        assertEquals("hash-Secret123!", result.getUser().getPassword());
-        assertEquals(Role.PATIENT, result.getUser().getRole());
+        assertEquals("jankow@poczta.pl", result.email());
+        assertEquals("Jan Kowalski", result.fullName());
     }
 
     @Test
@@ -196,13 +256,9 @@ class PatientServiceTest {
             "123456789",
             LocalDate.of(1990, 5, 15)
         );
-        Patient patient = Patient.builder()
-            .firstName("Jan")
-            .lastName("Kowalski")
-            .build();
         when(userRepository.existsByEmail("jankow@poczta.pl")).thenReturn(false);
-        when(mapper.toEntity(command)).thenReturn(patient);
         when(patientRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(passwordEncoder.encode("Secret123!")).thenReturn("hash-Secret123!");
         ArgumentCaptor<Patient> captor = ArgumentCaptor.forClass(Patient.class);
 
         // when
@@ -212,7 +268,9 @@ class PatientServiceTest {
         verify(patientRepository).save(captor.capture());
         Patient saved = captor.getValue();
         assertEquals("Jan", saved.getFirstName());
+        assertEquals("ABC123456", saved.getIdCardNo());
         assertEquals("jankow@poczta.pl", saved.getUser().getEmail());
+        assertEquals("hash-Secret123!", saved.getUser().getPassword());
         assertEquals(Role.PATIENT, saved.getUser().getRole());
     }
 
@@ -242,13 +300,63 @@ class PatientServiceTest {
     }
 
     @Test
-    void update_patientExists_appliesCommandWithMapper() {
+    void create_emailTakenInOtherCase_throwsUserAlreadyExists() {
         // given
-        Patient patient = Patient.builder()
-            .id(1L)
-            .firstName("Jan")
-            .build();
+        PatientCreateCommand command = new PatientCreateCommand(
+            "JanKow@Poczta.pl",
+            "Secret123!",
+            "ABC123456",
+            "Jan",
+            "Kowalski",
+            "123456789",
+            LocalDate.of(1990, 5, 15)
+        );
+        when(userRepository.existsByEmail("jankow@poczta.pl")).thenReturn(true);
+
+        // when
+        UserAlreadyExistsException exception = assertThrows(
+            UserAlreadyExistsException.class,
+            () -> patientService.create(command)
+        );
+
+        // then
+        assertEquals("User with this email already exists", exception.getMessage());
+        verify(patientRepository, never()).save(any());
+    }
+
+    @Test
+    void create_idCardNoTaken_throwsPatientAlreadyExistsWithoutNumber() {
+        // given
+        PatientCreateCommand command = new PatientCreateCommand(
+            "jankow@poczta.pl",
+            "Secret123!",
+            "ABC123456",
+            "Jan",
+            "Kowalski",
+            "123456789",
+            LocalDate.of(1990, 5, 15)
+        );
+        when(userRepository.existsByEmail("jankow@poczta.pl")).thenReturn(false);
+        when(patientRepository.existsByIdCardNo("ABC123456")).thenReturn(true);
+
+        // when
+        PatientAlreadyExistsException exception = assertThrows(
+            PatientAlreadyExistsException.class,
+            () -> patientService.create(command)
+        );
+
+        // then
+        assertEquals("Patient with this ID card number already exists", exception.getMessage());
+        verify(patientRepository, never()).save(any());
+        verify(passwordEncoder, never()).encode(any());
+    }
+
+    @Test
+    void update_patientExists_changesDataAndKeepsIdCardNo() {
+        // given
+        Patient patient = patientWithAccount("jankow@poczta.pl");
         PatientUpdateCommand command = new PatientUpdateCommand(
+            "jankow@poczta.pl",
             "Janusz",
             "Nowak",
             "987654321",
@@ -257,17 +365,68 @@ class PatientServiceTest {
         when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
 
         // when
-        Patient result = patientService.update(1L, command);
+        PatientDto result = patientService.update(1L, command);
 
         // then
-        verify(mapper).update(patient, command);
-        assertSame(patient, result);
+        assertEquals("Janusz", result.firstName());
+        assertEquals("Nowak", result.lastName());
+        assertEquals("ABC123456", patient.getIdCardNo());
+        verify(userRepository, never()).existsByEmail(any());
+    }
+
+    @Test
+    void update_freeEmail_changesAccountEmail() {
+        // given
+        Patient patient = patientWithAccount("jankow@poczta.pl");
+        PatientUpdateCommand command = new PatientUpdateCommand(
+            "Janusz.Nowak@Poczta.pl",
+            "Janusz",
+            "Nowak",
+            "987654321",
+            LocalDate.of(1990, 5, 15)
+        );
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        when(userRepository.existsByEmail("janusz.nowak@poczta.pl")).thenReturn(false);
+
+        // when
+        PatientDto result = patientService.update(1L, command);
+
+        // then
+        assertEquals("janusz.nowak@poczta.pl", result.email());
+        assertEquals("janusz.nowak@poczta.pl", patient.getUser().getEmail());
+    }
+
+    @Test
+    void update_emailOfOtherAccount_throwsUserAlreadyExistsAndKeepsData() {
+        // given
+        Patient patient = patientWithAccount("jankow@poczta.pl");
+        PatientUpdateCommand command = new PatientUpdateCommand(
+            "anna.nowak@example.com",
+            "Janusz",
+            "Nowak",
+            "987654321",
+            LocalDate.of(1990, 5, 15)
+        );
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        when(userRepository.existsByEmail("anna.nowak@example.com")).thenReturn(true);
+
+        // when
+        UserAlreadyExistsException exception = assertThrows(
+            UserAlreadyExistsException.class,
+            () -> patientService.update(1L, command)
+        );
+
+        // then
+        assertEquals("User with this email already exists", exception.getMessage());
+        assertEquals("Jan", patient.getFirstName());
+        assertEquals("jankow@poczta.pl", patient.getUser().getEmail());
     }
 
     @Test
     void update_patientNotFound_throwsPatientNotFound() {
         // given
         PatientUpdateCommand command = new PatientUpdateCommand(
+            "jankow@poczta.pl",
             "Janusz",
             "Nowak",
             "987654321",
@@ -283,7 +442,6 @@ class PatientServiceTest {
 
         // then
         assertEquals("Patient with id 1 not found", exception.getMessage());
-        verify(mapper, never()).update(any(), any());
     }
 
     @Test
@@ -294,7 +452,8 @@ class PatientServiceTest {
             .user(
                 User.builder()
                     .email("jankow@poczta.pl")
-                    .password("OldSecret123!")
+                    .rawPassword("OldSecret123!")
+                    .passwordEncoder(passwordEncoder)
                     .build()
             )
             .build();
@@ -302,10 +461,11 @@ class PatientServiceTest {
         when(passwordEncoder.encode("NewSecret123!")).thenReturn("hash-NewSecret123!");
 
         // when
-        Patient result = patientService.changePassword(1L, "NewSecret123!");
+        PatientDto result = patientService.changePassword(1L, "NewSecret123!");
 
         // then
-        assertEquals("hash-NewSecret123!", result.getUser().getPassword());
+        assertEquals(1L, result.id());
+        assertEquals("hash-NewSecret123!", patient.getUser().getPassword());
     }
 
     @Test
@@ -324,21 +484,82 @@ class PatientServiceTest {
     }
 
     @Test
-    void deleteById_patientExists_removesFromRepository() {
+    void deleteById_patientWithoutVisits_deletesPatientThenAccount() {
         // given
-        when(patientRepository.existsById(1L)).thenReturn(true);
+        User user = User.builder()
+            .email("jankow@poczta.pl")
+            .rawPassword("Secret123!")
+            .passwordEncoder(passwordEncoder)
+            .build();
+        user.setId(7L);
+        Patient patient = Patient.builder()
+            .id(1L)
+            .user(user)
+            .build();
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        when(visitRepository.existsByPatientId(1L)).thenReturn(false);
+        when(doctorRepository.existsByUserId(7L)).thenReturn(false);
 
         // when
         patientService.deleteById(1L);
 
         // then
-        verify(patientRepository, times(1)).deleteById(1L);
+        InOrder inOrder = inOrder(patientRepository, userRepository);
+        inOrder.verify(patientRepository).delete(patient);
+        inOrder.verify(userRepository).delete(user);
+    }
+
+    @Test
+    void deleteById_accountAlsoBelongsToDoctor_deletesPatientKeepsAccount() {
+        // given
+        User user = User.builder()
+            .email("katarzyna.wrobel@example.com")
+            .rawPassword("Secret123!")
+            .passwordEncoder(passwordEncoder)
+            .role(Role.DOCTOR)
+            .build();
+        user.setId(7L);
+        Patient patient = Patient.builder()
+            .id(1L)
+            .user(user)
+            .build();
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        when(visitRepository.existsByPatientId(1L)).thenReturn(false);
+        when(doctorRepository.existsByUserId(7L)).thenReturn(true);
+
+        // when
+        patientService.deleteById(1L);
+
+        // then
+        verify(patientRepository).delete(patient);
+        verify(userRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteById_patientHasVisits_throwsPatientHasVisits() {
+        // given
+        Patient patient = Patient.builder()
+            .id(1L)
+            .build();
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        when(visitRepository.existsByPatientId(1L)).thenReturn(true);
+
+        // when
+        PatientHasVisitsException exception = assertThrows(
+            PatientHasVisitsException.class,
+            () -> patientService.deleteById(1L)
+        );
+
+        // then
+        assertEquals("Patient with id 1 has visits and cannot be deleted", exception.getMessage());
+        verify(patientRepository, never()).delete(any());
+        verify(userRepository, never()).delete(any());
     }
 
     @Test
     void deleteById_patientNotFound_throwsPatientNotFound() {
         // given
-        when(patientRepository.existsById(1L)).thenReturn(false);
+        when(patientRepository.findById(1L)).thenReturn(Optional.empty());
 
         // when
         PatientNotFoundException exception = assertThrows(
@@ -348,6 +569,22 @@ class PatientServiceTest {
 
         // then
         assertEquals("Patient with id 1 not found", exception.getMessage());
-        verify(patientRepository, never()).deleteById(any());
+        verify(patientRepository, never()).delete(any());
+        verify(userRepository, never()).delete(any());
+    }
+
+    private Patient patientWithAccount(String email) {
+        User user = User.builder()
+            .email(email)
+            .rawPassword("Secret123!")
+            .passwordEncoder(passwordEncoder)
+            .build();
+        return Patient.builder()
+            .id(1L)
+            .idCardNo("ABC123456")
+            .firstName("Jan")
+            .lastName("Kowalski")
+            .user(user)
+            .build();
     }
 }

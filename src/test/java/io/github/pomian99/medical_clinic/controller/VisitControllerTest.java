@@ -8,7 +8,6 @@ import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.VisitAlreadyBookedException;
 import io.github.pomian99.medical_clinic.facade.VisitBookingFacade;
-import io.github.pomian99.medical_clinic.mapper.VisitMapperImpl;
 import io.github.pomian99.medical_clinic.model.Specialization;
 import io.github.pomian99.medical_clinic.service.VisitService;
 import org.junit.jupiter.api.Test;
@@ -25,12 +24,13 @@ import java.util.List;
 
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(VisitController.class)
-@Import({VisitMapperImpl.class, SecurityConfig.class})
+@Import(SecurityConfig.class)
 @WithMockUser(roles = "PATIENT")
 class VisitControllerTest {
 
@@ -89,6 +89,19 @@ class VisitControllerTest {
 
         // when
         var result = mockMvc.perform(patch("/visits/2/book/99"));
+
+        // then
+        result.andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.detail").value("Patient with id 99 not found"));
+    }
+
+    @Test
+    void getVisitsByPatientId_patientNotFound_returnsNotFound() throws Exception {
+        // given
+        when(visitService.findAllByPatientId(99L)).thenThrow(new PatientNotFoundException(99L));
+
+        // when
+        var result = mockMvc.perform(get("/visits/patient/99"));
 
         // then
         result.andExpect(status().isNotFound())

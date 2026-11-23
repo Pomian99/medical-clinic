@@ -1,10 +1,13 @@
 package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
+import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.exception.DoctorNotFoundException;
 import io.github.pomian99.medical_clinic.exception.InvalidSortPropertyException;
+import io.github.pomian99.medical_clinic.exception.InvalidSubstitutionException;
 import io.github.pomian99.medical_clinic.exception.InvalidVisitException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
+import io.github.pomian99.medical_clinic.exception.PatientVisitOverlapsException;
 import io.github.pomian99.medical_clinic.exception.VisitAlreadyBookedException;
 import io.github.pomian99.medical_clinic.exception.VisitNotFoundException;
 import io.github.pomian99.medical_clinic.exception.VisitOverlapsException;
@@ -25,18 +28,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -214,10 +221,11 @@ class VisitServiceTest {
         when(patientRepository.findById(2L)).thenReturn(Optional.of(patient));
 
         // when
-        Visit result = visitService.book(1L, 2L);
+        VisitDto result = visitService.book(1L, 2L);
 
         // then
-        assertSame(patient, result.getPatient());
+        assertSame(patient, visit.getPatient());
+        assertEquals(2L, result.patientId());
     }
 
     @Test
@@ -310,17 +318,81 @@ class VisitServiceTest {
     }
 
     @Test
-    void findAll_allowedSort_returnsRepositoryPage() {
+    void book_patientHasOverlappingVisit_throwsPatientVisitOverlaps() {
         // given
-        PageRequest pageable = PageRequest.of(1, 5, Sort.by("startsAt").descending());
+        LocalDateTime startsAt = NOW.plusDays(1);
+        LocalDateTime endsAt = startsAt.plusMinutes(30);
+        Visit visit = Visit.builder()
+            .id(1L)
+            .startsAt(startsAt)
+            .endsAt(endsAt)
+            .build();
+        Patient patient = Patient.builder()
+            .id(2L)
+            .build();
+        when(visitRepository.findById(1L)).thenReturn(Optional.of(visit));
+        when(patientRepository.findById(2L)).thenReturn(Optional.of(patient));
+        when(visitRepository.existsByPatientIdAndStartsAtBeforeAndEndsAtAfter(2L, endsAt, startsAt)).thenReturn(true);
+
+        // when
+        PatientVisitOverlapsException exception = assertThrows(
+            PatientVisitOverlapsException.class,
+            () -> visitService.book(1L, 2L)
+        );
+
+        // then
+        assertEquals(
+            "Patient with id 2 already has a visit overlapping 2030-01-16T08:00 - 2030-01-16T08:30",
+            exception.getMessage()
+        );
+        assertNull(visit.getPatient());
+    }
+
+    @Test
+    void findAll_allowedSort_returnsPageOfDtos() {
+        // given
+        PageRequest pageable = PageRequest.of(1, 5, Sort.by(Sort.Order.desc("startsAt"), Sort.Order.asc("id")));
         Page<Visit> page = new PageImpl<>(List.of(Visit.builder().id(6L).build()), pageable, 12);
         when(visitRepository.findAll(pageable)).thenReturn(page);
 
         // when
-        Page<Visit> result = visitService.findAll(pageable);
+        Page<VisitDto> result = visitService.findAll(pageable);
 
         // then
-        assertSame(page, result);
+        assertEquals(6L, result.getContent().get(0).id());
+        assertEquals(12, result.getTotalElements());
+        assertEquals(1, result.getNumber());
+    }
+
+    @Test
+    void findAll_sortWithoutId_addsIdAsLastSortKey() {
+        // given
+        PageRequest pageable = PageRequest.of(1, 5, Sort.by("startsAt").descending());
+        when(visitRepository.findAll(any(Pageable.class))).thenReturn(Page.empty());
+        ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+
+        // when
+        visitService.findAll(pageable);
+
+        // then
+        verify(visitRepository).findAll(captor.capture());
+        Pageable used = captor.getValue();
+        assertEquals(Sort.by(Sort.Order.desc("startsAt"), Sort.Order.asc("id")), used.getSort());
+        assertEquals(1, used.getPageNumber());
+        assertEquals(5, used.getPageSize());
+    }
+
+    @Test
+    void findAll_sortWithId_keepsClientSort() {
+        // given
+        PageRequest pageable = PageRequest.of(0, 20, Sort.by("id").descending());
+        when(visitRepository.findAll(any(Pageable.class))).thenReturn(Page.empty());
+
+        // when
+        visitService.findAll(pageable);
+
+        // then
+        verify(visitRepository).findAll(pageable);
     }
 
     @Test
@@ -340,5 +412,185 @@ class VisitServiceTest {
             exception.getMessage()
         );
         verify(visitRepository, never()).findAll(any(PageRequest.class));
+    }
+
+    @Test
+    void substitute_upcomingVisits_movesThemFromNowToSubstitute() {
+        // given
+        Doctor substitute = new Doctor();
+        substitute.setId(2L);
+        Visit upcoming = Visit.builder()
+            .id(5L)
+            .startsAt(NOW)
+            .endsAt(NOW.plusMinutes(30))
+            .build();
+        when(doctorRepository.existsById(1L)).thenReturn(true);
+        when(doctorRepository.findById(2L)).thenReturn(Optional.of(substitute));
+        when(visitRepository.findAllByDoctorIdAndStartsAtGreaterThanEqualOrderByStartsAt(1L, NOW))
+            .thenReturn(List.of(upcoming));
+
+        // when
+        List<VisitDto> result = visitService.substitute(1L, 2L);
+
+        // then
+        assertSame(substitute, upcoming.getDoctor());
+        assertEquals(List.of(5L), result.stream().map(VisitDto::id).toList());
+        assertEquals(2L, result.get(0).doctorId());
+    }
+
+    @Test
+    void substitute_substituteBusy_throwsVisitOverlapsAndMovesNothing() {
+        // given
+        Doctor doctor = new Doctor();
+        doctor.setId(1L);
+        Doctor substitute = new Doctor();
+        substitute.setId(2L);
+        Visit first = Visit.builder()
+            .id(5L)
+            .doctor(doctor)
+            .startsAt(NOW.plusDays(1))
+            .endsAt(NOW.plusDays(1).plusMinutes(30))
+            .build();
+        Visit second = Visit.builder()
+            .id(6L)
+            .doctor(doctor)
+            .startsAt(NOW.plusDays(2))
+            .endsAt(NOW.plusDays(2).plusMinutes(30))
+            .build();
+        when(doctorRepository.existsById(1L)).thenReturn(true);
+        when(doctorRepository.findById(2L)).thenReturn(Optional.of(substitute));
+        when(visitRepository.findAllByDoctorIdAndStartsAtGreaterThanEqualOrderByStartsAt(1L, NOW))
+            .thenReturn(List.of(first, second));
+        when(visitRepository.existsByDoctorIdAndStartsAtBeforeAndEndsAtAfter(2L, first.getEndsAt(), first.getStartsAt()))
+            .thenReturn(true);
+
+        // when
+        VisitOverlapsException exception = assertThrows(
+            VisitOverlapsException.class,
+            () -> visitService.substitute(1L, 2L)
+        );
+
+        // then
+        assertEquals(
+            "Doctor with id 2 already has a visit overlapping 2030-01-16T08:00 - 2030-01-16T08:30",
+            exception.getMessage()
+        );
+        assertSame(doctor, first.getDoctor());
+        assertSame(doctor, second.getDoctor());
+    }
+
+    @Test
+    void substitute_sameDoctor_throwsInvalidSubstitution() {
+        // when
+        InvalidSubstitutionException exception = assertThrows(
+            InvalidSubstitutionException.class,
+            () -> visitService.substitute(1L, 1L)
+        );
+
+        // then
+        assertEquals("Doctor with id 1 cannot substitute for themselves", exception.getMessage());
+        verify(visitRepository, never()).findAllByDoctorIdAndStartsAtGreaterThanEqualOrderByStartsAt(anyLong(), any());
+    }
+
+    @Test
+    void countFreeSlots_day_countsFromMidnightToNextMidnight() {
+        // given
+        LocalDate day = LocalDate.of(2030, 1, 20);
+        when(visitRepository.countFreeSlots(1L, day.atStartOfDay(), day.plusDays(1).atStartOfDay())).thenReturn(4L);
+
+        // when
+        long result = visitService.countFreeSlots(1L, day);
+
+        // then
+        assertEquals(4L, result);
+    }
+
+    @Test
+    void countFreeSlots_lastDayOfYear_endsAtMidnightOfNewYear() {
+        // given
+        LocalDate day = LocalDate.of(2030, 12, 31);
+        when(visitRepository.countFreeSlots(
+            1L, LocalDateTime.of(2030, 12, 31, 0, 0), LocalDateTime.of(2031, 1, 1, 0, 0)
+        )).thenReturn(0L);
+
+        // when
+        long result = visitService.countFreeSlots(1L, day);
+
+        // then
+        assertEquals(0L, result);
+    }
+
+    @Test
+    void findAllByDoctorId_doctorHasVisits_returnsVisitsFromEarliest() {
+        // given
+        Visit earlier = Visit.builder()
+            .id(9L)
+            .startsAt(NOW.plusDays(1))
+            .endsAt(NOW.plusDays(1).plusMinutes(30))
+            .build();
+        Visit later = Visit.builder()
+            .id(4L)
+            .startsAt(NOW.plusDays(3))
+            .endsAt(NOW.plusDays(3).plusMinutes(30))
+            .build();
+        when(visitRepository.findAllByDoctorIdOrderByStartsAt(1L)).thenReturn(List.of(earlier, later));
+
+        // when
+        List<VisitDto> result = visitService.findAllByDoctorId(1L);
+
+        // then
+        assertEquals(List.of(9L, 4L), result.stream().map(VisitDto::id).toList());
+    }
+
+    @Test
+    void findAllByPatientId_patientExists_returnsVisitsFromEarliest() {
+        // given
+        Visit earlier = Visit.builder()
+            .id(7L)
+            .startsAt(NOW.plusDays(1))
+            .endsAt(NOW.plusDays(1).plusMinutes(30))
+            .build();
+        Visit later = Visit.builder()
+            .id(3L)
+            .startsAt(NOW.plusDays(2))
+            .endsAt(NOW.plusDays(2).plusMinutes(30))
+            .build();
+        when(patientRepository.existsById(2L)).thenReturn(true);
+        when(visitRepository.findAllByPatientIdOrderByStartsAt(2L)).thenReturn(List.of(earlier, later));
+
+        // when
+        List<VisitDto> result = visitService.findAllByPatientId(2L);
+
+        // then
+        assertEquals(List.of(7L, 3L), result.stream().map(VisitDto::id).toList());
+    }
+
+    @Test
+    void findAllByPatientId_patientWithoutVisits_returnsEmptyList() {
+        // given
+        when(patientRepository.existsById(2L)).thenReturn(true);
+        when(visitRepository.findAllByPatientIdOrderByStartsAt(2L)).thenReturn(List.of());
+
+        // when
+        List<VisitDto> result = visitService.findAllByPatientId(2L);
+
+        // then
+        assertEquals(List.of(), result);
+    }
+
+    @Test
+    void findAllByPatientId_patientNotFound_throwsPatientNotFound() {
+        // given
+        when(patientRepository.existsById(99L)).thenReturn(false);
+
+        // when
+        PatientNotFoundException exception = assertThrows(
+            PatientNotFoundException.class,
+            () -> visitService.findAllByPatientId(99L)
+        );
+
+        // then
+        assertEquals("Patient with id 99 not found", exception.getMessage());
+        verify(visitRepository, never()).findAllByPatientIdOrderByStartsAt(anyLong());
     }
 }

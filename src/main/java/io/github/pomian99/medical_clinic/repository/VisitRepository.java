@@ -10,10 +10,12 @@ import java.util.List;
 
 public interface VisitRepository extends JpaRepository<Visit, Long> {
     boolean existsByDoctorId(long doctorId);
-    List<Visit> findAllByDoctorId(long doctorId);
     List<Visit> findAllByDoctorIdOrderByStartsAt(long doctorId);
-    List<Visit> findAllByPatientId(long patientId);
+    List<Visit> findAllByDoctorIdAndStartsAtGreaterThanEqualOrderByStartsAt(long doctorId, LocalDateTime from);
+    List<Visit> findAllByPatientIdOrderByStartsAt(long patientId);
+    boolean existsByPatientId(long patientId);
     boolean existsByDoctorIdAndStartsAtBeforeAndEndsAtAfter(long doctorId, LocalDateTime end, LocalDateTime start);
+    boolean existsByPatientIdAndStartsAtBeforeAndEndsAtAfter(long patientId, LocalDateTime end, LocalDateTime start);
 
     @Query("""
         select count(v) from Visit v

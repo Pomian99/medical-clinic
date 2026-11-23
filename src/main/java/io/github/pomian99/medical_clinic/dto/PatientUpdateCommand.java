@@ -1,12 +1,15 @@
 package io.github.pomian99.medical_clinic.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
+import static io.github.pomian99.medical_clinic.dto.ValidationRules.EMAIL_MAX_LENGTH;
 import static io.github.pomian99.medical_clinic.dto.ValidationRules.FIRST_NAME_PATTERN_MESSAGE;
 import static io.github.pomian99.medical_clinic.dto.ValidationRules.LAST_NAME_PATTERN_MESSAGE;
 import static io.github.pomian99.medical_clinic.dto.ValidationRules.NAME_MAX_LENGTH;
@@ -15,6 +18,11 @@ import static io.github.pomian99.medical_clinic.dto.ValidationRules.PHONE_NUMBER
 import static io.github.pomian99.medical_clinic.dto.ValidationRules.PHONE_NUMBER_REGEX;
 
 public record PatientUpdateCommand(
+        @NotBlank(message = "Email cannot be blank")
+        @Email(message = "Email must be valid")
+        @Size(max = EMAIL_MAX_LENGTH, message = "Email cannot be longer than {max} characters")
+        String email,
+
         @NotBlank(message = "First name cannot be blank")
         @Size(max = NAME_MAX_LENGTH, message = "First name cannot be longer than {max} characters")
         @Pattern(regexp = NAME_REGEX, message = FIRST_NAME_PATTERN_MESSAGE)
@@ -29,6 +37,7 @@ public record PatientUpdateCommand(
         @Pattern(regexp = PHONE_NUMBER_REGEX, message = PHONE_NUMBER_PATTERN_MESSAGE)
         String phoneNumber,
 
+        @NotNull(message = "Birthday is required")
         @Past(message = "Birthday must be a date in the past")
         LocalDate birthday
 ) {

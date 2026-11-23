@@ -1,0 +1,24 @@
+info:
+  name: Remove User
+  type: http
+  seq: 7
+
+http:
+  method: DELETE
+  url: "{{baseUrl}}/users/1"
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+
+docs: |-
+  Deleting answers 200 with an empty object. Nothing is deleted.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

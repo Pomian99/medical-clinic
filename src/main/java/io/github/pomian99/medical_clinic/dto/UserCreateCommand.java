@@ -30,4 +30,8 @@ public record UserCreateCommand(
         // Optional: an account without a role gets one when a doctor is attached to it.
         Role role
 ) {
+    @Override
+    public String toString() {
+        return "UserCreateCommand[email=" + email + ", password=***, role=" + role + "]";
+    }
 }

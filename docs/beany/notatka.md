@@ -39,3 +39,15 @@ Jest to klasa zewnętrzna i nie mamy kontroli nad jej implementacją. Any wprowa
 
 ### III
 Sprawdzam, czy inne beany powstają poprawnie. Przeglądam czy ścieżka danej klasy nie wychodzi poza zakres widoczności Springa.
+
+# Co się zmieniło (22.11.2026, poprawka po recenzji PR #31)
+
+D3 opisuje stan bez `lombok.config`. Lombok nie kopiował wtedy `@Qualifier` z pola do konstruktora,
+który generuje, więc Spring dostawał konstruktor bez kwalifikatora i wybierał beana z `@Primary`,
+czyli `EmailReminderSender`.
+
+Teraz w katalogu projektu jest `lombok.config` z
+`lombok.copyableAnnotations += org.springframework.beans.factory.annotation.Qualifier`, a
+`VisitReminderService` ma `@RequiredArgsConstructor` i `@Qualifier("smsReminderSender")` nad polem
+(9a0d8a3). Skompilowany konstruktor ma `@Qualifier(value="smsReminderSender")` na parametrze
+(sprawdzone przez `javap`), więc wstrzykiwany jest `SmsReminderSender`.

@@ -1,0 +1,41 @@
+info:
+  name: Create Patient Email Taken
+  type: http
+  seq: 15
+
+http:
+  method: POST
+  url: "{{baseUrl}}/patients"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "Anna.Nowak@Example.com",
+        "password": "Secret#123",
+        "idCardNo": "GHI987654",
+        "firstName": "Anna",
+        "lastName": "Nowak",
+        "phoneNumber": "600100300",
+        "birthday": "1990-05-12"
+      }
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "409"
+    - expression: res.body.detail
+      operator: eq
+      value: "User with this email already exists"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+docs: |-
+  Expected 409 Conflict. The address is Anna's from data.sql written with capital letters:
+  e-mails are compared in lowercase, so it is taken. Nothing is saved, so the request can be run
+  any number of times.

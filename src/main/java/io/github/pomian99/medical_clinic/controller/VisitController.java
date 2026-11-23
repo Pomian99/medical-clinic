@@ -5,9 +5,10 @@ import io.github.pomian99.medical_clinic.dto.PageResponse;
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
 import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.facade.VisitBookingFacade;
-import io.github.pomian99.medical_clinic.mapper.VisitMapper;
 import io.github.pomian99.medical_clinic.service.VisitService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -38,43 +40,54 @@ import java.util.List;
 public class VisitController {
     private final VisitService visitService;
     private final VisitBookingFacade bookingFacade;
-    private final VisitMapper mapper;
 
     @Operation(
-        summary = "List all visits page by page",
-        description = "Query parameters page (from 0), size and sort, e.g. ?page=1&size=5&sort=startsAt,desc. "
-            + "Without them: first page of 20 visits, sorted by startsAt, then id."
-    )
-    @GetMapping
-    public PageResponse<VisitDto> getVisits(
-        @PageableDefault(size = 20, sort = {"startsAt", "id"}) Pageable pageable
-    ) {
-        return PageResponse.from(visitService.findAll(pageable).map(mapper::toDto));
-    }
-
-    @Operation(
-            summary = "List visits of doctor with given id",
-            description = "Returns both free slots and booked visits. "
-                    + "A doctor without visits, or an unknown doctor id, gives an empty list."
+        summary = "List all visits page by page, or all visits of one doctor",
+        description = "One path with two variants, chosen by the query parameters:\n\n"
+            + "- without `doctorId`: one page of all visits. `page` counts from 0, `size` is at most 100, "
+            + "`sort` takes startsAt, endsAt or id, e.g. `?page=1&size=5&sort=startsAt,desc`. "
+            + "Without them: first page of 20 visits, sorted by startsAt, then id; "
+            + "id is always added as the last sort key;\n"
+            + "- with `doctorId`: all visits of this doctor, free slots and booked ones, from the earliest, "
+            + "as a plain list (not a page; `page`, `size` and `sort` are ignored). "
+            + "A doctor without visits, or an unknown doctor id, gives an empty list.",
+        parameters = @Parameter(
+            name = "doctorId",
+            in = ParameterIn.QUERY,
+            required = false,
+            description = "Id of the doctor; the response is a plain list of their visits instead of a page",
+            schema = @Schema(type = "integer", format = "int64")
+        )
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Visits of the doctor"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "The doctorId parameter is not a number",
-                    content = @Content(
-                            schema = @Schema(implementation = ProblemDetail.class)
-                    ))
+        @ApiResponse(
+            responseCode = "200",
+            description = "A page of visits, or a plain list of VisitDto when doctorId is given"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "doctorId is not a number, or sort uses a property other than startsAt, endsAt or id",
+            content = @Content(
+                schema = @Schema(implementation = ProblemDetail.class)
+            ))
     })
+    @GetMapping
+    public PageResponse<VisitDto> getVisits(
+        @ParameterObject @PageableDefault(size = 20, sort = {"startsAt", "id"}) Pageable pageable
+    ) {
+        return PageResponse.from(visitService.findAll(pageable));
+    }
+
+    @Operation(hidden = true)
     @GetMapping(params = "doctorId")
     public List<VisitDto> getVisitsByDoctorId(@RequestParam long doctorId) {
-        return mapper.toDto(visitService.findAllByDoctorId(doctorId));
+        return visitService.findAllByDoctorId(doctorId);
     }
 
     @Operation(
             summary = "List visits of patient with given id",
-            description = "Returns visits booked by the patient. "
-                    + "A patient without visits, or an unknown patient id, gives an empty list."
+            description = "Returns visits booked by the patient, from the earliest. "
+                    + "A patient without visits gives an empty list."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Visits of the patient"),
@@ -83,11 +96,17 @@ public class VisitController {
                     description = "The id in the path is not a number",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
+                    )),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "No patient with this id exists",
+                    content = @Content(
+                            schema = @Schema(implementation = ProblemDetail.class)
                     ))
     })
     @GetMapping("/patient/{patientId}")
     public List<VisitDto> getVisitsByPatientId(@PathVariable long patientId) {
-        return mapper.toDto(visitService.findAllByPatientId(patientId));
+        return visitService.findAllByPatientId(patientId);
     }
 
     @Operation(
@@ -119,12 +138,13 @@ public class VisitController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public VisitDto createVisit(@Valid @RequestBody VisitCreateCommand command) {
-        return mapper.toDto(visitService.create(command));
+        return visitService.create(command);
     }
 
     @Operation(
             summary = "Book visit with given id for patient with given id",
-            description = "Assigns the patient to a free slot that has not started yet."
+            description = "Assigns the patient to a free slot that has not started yet. "
+                    + "A patient cannot have two visits at the same time, also with different doctors."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Visit booked, booking summary returned"),
@@ -142,7 +162,8 @@ public class VisitController {
                     )),
             @ApiResponse(
                     responseCode = "409",
-                    description = "The visit is already booked",
+                    description = "The visit is already booked (also when another booking of it won at the "
+                            + "same moment), or the patient already has a visit overlapping this one",
                     content = @Content(
                             schema = @Schema(implementation = ProblemDetail.class)
                     ))

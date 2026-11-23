@@ -1,6 +1,7 @@
 package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.DoctorCreateCommand;
+import io.github.pomian99.medical_clinic.dto.DoctorDto;
 import io.github.pomian99.medical_clinic.exception.DoctorAlreadyExistsException;
 import io.github.pomian99.medical_clinic.exception.DoctorHasVisitsException;
 import io.github.pomian99.medical_clinic.exception.DoctorNotFoundException;
@@ -34,19 +35,18 @@ public class DoctorService {
     private final DoctorMapper mapper;
 
     @Transactional(readOnly = true)
-    public List<Doctor> findAll() {
-        return doctorRepository.findAll();
+    public List<DoctorDto> findAll() {
+        return mapper.toDto(doctorRepository.findAll());
     }
 
     @Transactional(readOnly = true)
-    public Doctor findById(long id) {
-        return doctorRepository.findById(id)
-                .orElseThrow(() -> new DoctorNotFoundException(id));
+    public DoctorDto findById(long id) {
+        return mapper.toDto(getDoctor(id));
     }
 
     // Two writes (the doctor and the account's role) must succeed or fail together.
     @Transactional
-    public Doctor create(DoctorCreateCommand command) {
+    public DoctorDto create(DoctorCreateCommand command) {
         // The account must exist first: reception creates it with POST /users.
         User user = userRepository.findById(command.userId())
                 .orElseThrow(() -> new UserNotFoundException(command.userId()));
@@ -69,7 +69,7 @@ public class DoctorService {
 
         Doctor saved = doctorRepository.save(doctor);
         log.info("Created doctor {} for user {}", saved.getId(), user.getId());
-        return saved;
+        return mapper.toDto(saved);
     }
 
     @Transactional
@@ -87,22 +87,27 @@ public class DoctorService {
     }
 
     @Transactional
-    public Doctor addFacility(long doctorId, long facilityId) {
-        Doctor doctor = findById(doctorId);
+    public DoctorDto addFacility(long doctorId, long facilityId) {
+        Doctor doctor = getDoctor(doctorId);
         Facility facility = facilityRepository.findById(facilityId)
             .orElseThrow(() -> new FacilityNotFoundException(facilityId));
         doctor.addFacility(facility);
         log.info("Assigned facility {} to doctor {}", facilityId, doctorId);
-        return doctor;
+        return mapper.toDto(doctor);
     }
 
     @Transactional
-    public Doctor removeFacility(long doctorId, long facilityId) {
-        Doctor doctor = findById(doctorId);
+    public DoctorDto removeFacility(long doctorId, long facilityId) {
+        Doctor doctor = getDoctor(doctorId);
         Facility facility = facilityRepository.findById(facilityId)
             .orElseThrow(() -> new FacilityNotFoundException(facilityId));
         doctor.removeFacility(facility);
         log.info("Removed facility {} from doctor {}", facilityId, doctorId);
-        return doctor;
+        return mapper.toDto(doctor);
+    }
+
+    private Doctor getDoctor(long id) {
+        return doctorRepository.findById(id)
+                .orElseThrow(() -> new DoctorNotFoundException(id));
     }
 }

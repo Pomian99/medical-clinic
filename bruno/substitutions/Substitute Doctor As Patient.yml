@@ -1,0 +1,31 @@
+info:
+  name: Substitute Doctor As Patient
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{baseUrl}}/doctors/1/substitutions"
+  body:
+    type: json
+    data: |-
+      {
+        "substituteId": {{substituteId}}
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "403"
+
+docs: |-
+  Moving a doctor's visits to a substitute is for the admin only. Anna's token is refused before the service runs.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

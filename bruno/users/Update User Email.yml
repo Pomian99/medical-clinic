@@ -1,0 +1,38 @@
+info:
+  name: Update User Email
+  type: http
+  seq: 8
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/users/{{userId}}"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "Adam.Lis.Nowy@example.com"
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.email
+      operator: eq
+      value: adam.lis.nowy@example.com
+    - expression: res.body.role
+      operator: eq
+      value: DOCTOR
+
+docs: |-
+  Changes the e-mail of the account created by "Create User". The address is saved in lowercase,
+  and the role stays: it follows the doctor or patient on the account.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
