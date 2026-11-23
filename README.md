@@ -60,7 +60,7 @@ The roles are checked in `config/SecurityConfig.java`. In short:
 | Who | Endpoints |
 |---|---|
 | nobody logged in | `POST /patients` (registration works only without a token), `POST /auth/token` |
-| `ADMIN` | `/users/**`, `GET /patients` (list and search), `GET` and `POST /doctors`, `POST /facilities`, `POST /visits` (new free slots), the API documentation, `GET /postman/**` |
+| `ADMIN` | `/users/**`, `GET /patients` (list and search), `GET` and `POST /doctors`, `DELETE /doctors/{id}`, `POST /doctors/{id}/substitutions`, `POST /facilities`, `POST /visits` (new free slots), the API documentation, `GET /postman/**` |
 | `DOCTOR` | `POST` and `DELETE /doctors/{id}/facilities/{facilityId}` |
 | `PATIENT` | the remaining requests under `/patients/**`, `/doctors/**`, `/facilities/**` and `/visits/**` |
 | any account | `GET /facilities/**` |

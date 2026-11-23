@@ -6,7 +6,9 @@ info:
 http:
   method: DELETE
   url: "{{baseUrl}}/doctors/1"
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{adminToken}}"
 
 runtime:
   assertions:

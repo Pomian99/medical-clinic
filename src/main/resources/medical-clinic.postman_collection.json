@@ -1268,6 +1268,16 @@
           "request": {
             "method": "DELETE",
             "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "description": "Doctor 1 has the slot made by \"Create Visit\", and a visit cannot exist without a doctor.",
             "url": {
               "raw": "{{baseUrl}}/doctors/1",
@@ -1300,6 +1310,27 @@
                 "visits",
                 "patient",
                 "-1"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Remove Doctor As Patient",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "description": "Deleting a doctor is for the admin only. Anna's token is refused before the service checks the visits.",
+            "url": {
+              "raw": "{{baseUrl}}/doctors/1",
+              "protocol": "",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctors",
+                "1"
               ],
               "query": [],
               "variable": []
@@ -1888,6 +1919,16 @@
           "request": {
             "method": "POST",
             "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "description": "",
             "url": {
               "raw": "{{baseUrl}}/doctors/1/substitutions",
@@ -1951,6 +1992,37 @@
               }
             }
           ]
+        },
+        {
+          "name": "Substitute Doctor As Patient",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "description": "Moving a doctor's visits to a substitute is for the admin only. Anna's token is refused before the service runs.",
+            "url": {
+              "raw": "{{baseUrl}}/doctors/1/substitutions",
+              "protocol": "",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "doctors",
+                "1",
+                "substitutions"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"substituteId\": {{substituteId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -2439,22 +2511,12 @@
       "type": "default"
     },
     {
-      "key": "slotId",
-      "value": "",
-      "type": "default"
-    },
-    {
       "key": "patientId",
       "value": "",
       "type": "default"
     },
     {
-      "key": "userId",
-      "value": "",
-      "type": "default"
-    },
-    {
-      "key": "patientUserId",
+      "key": "slotId",
       "value": "",
       "type": "default"
     },
@@ -2465,6 +2527,16 @@
     },
     {
       "key": "substituteUserId",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "patientUserId",
       "value": "",
       "type": "default"
     },
