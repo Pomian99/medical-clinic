@@ -11,6 +11,7 @@ import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.model.Role;
 import io.github.pomian99.medical_clinic.model.User;
+import io.github.pomian99.medical_clinic.repository.DoctorRepository;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import io.github.pomian99.medical_clinic.repository.VisitRepository;
@@ -29,6 +30,7 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
     private final VisitRepository visitRepository;
+    private final DoctorRepository doctorRepository;
     private final PatientMapper mapper;
     private final PasswordEncoder passwordEncoder;
 
@@ -114,8 +116,12 @@ public class PatientService {
 
         User user = patient.getUser();
         patientRepository.delete(patient);
-        userRepository.delete(user);
-        log.info("Deleted patient {} and account {}", id, user.getId());
+        if (doctorRepository.existsByUserId(user.getId())) {
+            log.info("Deleted patient {}, account {} stays with its doctor", id, user.getId());
+        } else {
+            userRepository.delete(user);
+            log.info("Deleted patient {} and account {}", id, user.getId());
+        }
     }
 
     private Patient getPatient(long id) {

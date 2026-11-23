@@ -11,6 +11,7 @@ import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.model.Role;
 import io.github.pomian99.medical_clinic.model.User;
+import io.github.pomian99.medical_clinic.repository.DoctorRepository;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
 import io.github.pomian99.medical_clinic.repository.VisitRepository;
@@ -49,6 +50,9 @@ class PatientServiceTest {
     VisitRepository visitRepository;
 
     @Mock
+    DoctorRepository doctorRepository;
+
+    @Mock
     PasswordEncoder passwordEncoder;
 
     PatientService patientService;
@@ -56,7 +60,8 @@ class PatientServiceTest {
     @BeforeEach
     void setUp() {
         PatientMapper mapper = Mappers.getMapper(PatientMapper.class);
-        patientService = new PatientService(patientRepository, userRepository, visitRepository, mapper, passwordEncoder);
+        patientService = new PatientService(patientRepository, userRepository, visitRepository, doctorRepository,
+            mapper, passwordEncoder);
     }
 
     @Test
@@ -486,12 +491,14 @@ class PatientServiceTest {
             .rawPassword("Secret123!")
             .passwordEncoder(passwordEncoder)
             .build();
+        user.setId(7L);
         Patient patient = Patient.builder()
             .id(1L)
             .user(user)
             .build();
         when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
         when(visitRepository.existsByPatientId(1L)).thenReturn(false);
+        when(doctorRepository.existsByUserId(7L)).thenReturn(false);
 
         // when
         patientService.deleteById(1L);
@@ -500,6 +507,32 @@ class PatientServiceTest {
         InOrder inOrder = inOrder(patientRepository, userRepository);
         inOrder.verify(patientRepository).delete(patient);
         inOrder.verify(userRepository).delete(user);
+    }
+
+    @Test
+    void deleteById_accountAlsoBelongsToDoctor_deletesPatientKeepsAccount() {
+        // given
+        User user = User.builder()
+            .email("katarzyna.wrobel@example.com")
+            .rawPassword("Secret123!")
+            .passwordEncoder(passwordEncoder)
+            .role(Role.DOCTOR)
+            .build();
+        user.setId(7L);
+        Patient patient = Patient.builder()
+            .id(1L)
+            .user(user)
+            .build();
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        when(visitRepository.existsByPatientId(1L)).thenReturn(false);
+        when(doctorRepository.existsByUserId(7L)).thenReturn(true);
+
+        // when
+        patientService.deleteById(1L);
+
+        // then
+        verify(patientRepository).delete(patient);
+        verify(userRepository, never()).delete(any());
     }
 
     @Test

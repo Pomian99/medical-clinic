@@ -1,7 +1,14 @@
 package io.github.pomian99.medical_clinic.controller;
 
 import com.jayway.jsonpath.JsonPath;
+import io.github.pomian99.medical_clinic.model.Doctor;
+import io.github.pomian99.medical_clinic.model.Patient;
+import io.github.pomian99.medical_clinic.model.Role;
+import io.github.pomian99.medical_clinic.model.Specialization;
+import io.github.pomian99.medical_clinic.model.User;
+import io.github.pomian99.medical_clinic.repository.DoctorRepository;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
+import io.github.pomian99.medical_clinic.repository.UserRepository;
 import io.github.pomian99.medical_clinic.service.PatientService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -11,9 +18,13 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -23,6 +34,7 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -52,7 +64,21 @@ class PatientApiIntegrationTest {
     @Autowired
     PatientService patientService;
 
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    DoctorRepository doctorRepository;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
+    @Autowired
+    TransactionTemplate transactionTemplate;
+
     private final List<Long> registeredIds = new ArrayList<>();
+
+    private SharedAccount sharedAccount;
 
     @AfterEach
     void deleteRegisteredPatients() {
@@ -60,6 +86,13 @@ class PatientApiIntegrationTest {
             if (patientRepository.existsById(id)) {
                 patientService.deleteById(id);
             }
+        }
+        if (sharedAccount != null) {
+            if (patientRepository.existsById(sharedAccount.patientId())) {
+                patientRepository.deleteById(sharedAccount.patientId());
+            }
+            doctorRepository.deleteById(sharedAccount.doctorId());
+            userRepository.deleteById(sharedAccount.userId());
         }
     }
 
@@ -296,6 +329,23 @@ class PatientApiIntegrationTest {
     }
 
     @Test
+    void deletePatient_accountAlsoBelongsToDoctor_removesPatientKeepsAccountAndDoctor() throws Exception {
+        // given
+        sharedAccount = doctorWhoIsAlsoPatient();
+        String janToken = bearer(register("Jan", "Kowalski"));
+
+        // when
+        var result = mockMvc.perform(delete("/patients/{id}", sharedAccount.patientId())
+            .header(HttpHeaders.AUTHORIZATION, janToken));
+
+        // then
+        result.andExpect(status().isNoContent());
+        assertFalse(patientRepository.existsById(sharedAccount.patientId()));
+        assertTrue(doctorRepository.existsById(sharedAccount.doctorId()));
+        assertEquals(200, loginStatus(sharedAccount.email(), PASSWORD));
+    }
+
+    @Test
     void getPatientById_unknownId_returnsNotFound() throws Exception {
         // given
         Registered jan = register("Jan", "Kowalski");
@@ -464,6 +514,29 @@ class PatientApiIntegrationTest {
         return new Registered(id, email, idCardNo);
     }
 
+    private SharedAccount doctorWhoIsAlsoPatient() {
+        String email = nextEmail();
+        return transactionTemplate.execute(status -> {
+            User user = userRepository.save(User.builder()
+                .email(email)
+                .rawPassword(PASSWORD)
+                .passwordEncoder(passwordEncoder)
+                .role(Role.DOCTOR)
+                .build());
+            Doctor doctor = doctorRepository.save(
+                new Doctor(null, "Katarzyna", "Wrobel", Specialization.CARDIOLOGIST, user, new HashSet<>()));
+            Patient patient = patientRepository.save(Patient.builder()
+                .user(user)
+                .idCardNo(nextIdCardNo())
+                .firstName("Katarzyna")
+                .lastName("Wrobel")
+                .phoneNumber("123456789")
+                .birthday(LocalDate.of(1982, 7, 14))
+                .build());
+            return new SharedAccount(user.getId(), doctor.getId(), patient.getId(), email);
+        });
+    }
+
     private String bearer(Registered patient) throws Exception {
         return "Bearer " + token(patient.email(), PASSWORD);
     }
@@ -529,5 +602,8 @@ class PatientApiIntegrationTest {
     }
 
     private record Registered(long id, String email, String idCardNo) {
+    }
+
+    private record SharedAccount(long userId, long doctorId, long patientId, String email) {
     }
 }

@@ -203,10 +203,11 @@ public class PatientController {
 
     @Operation(
             summary = "Delete patient with given id",
-            description = "Only a patient without visits can be deleted. The account is deleted with the patient."
+            description = "Only a patient without visits can be deleted. The account is deleted with the patient, "
+                    + "unless a doctor uses the same account: then the account stays with the doctor."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Patient and account deleted"),
+            @ApiResponse(responseCode = "204", description = "Patient deleted, and the account too if no doctor uses it"),
             @ApiResponse(
                     responseCode = "400",
                     description = "The id in the path is not a number",

@@ -120,6 +120,7 @@ właściciela.
 - Sekcja 4: kaskady są dwie, `Patient.user` (`PERSIST`) i `Doctor.user` (`PERSIST`, `MERGE`). Wiersza
   z `User.patient` już nie ma. `DELETE /users/{id}` na koncie pacjenta albo doktora dalej daje 409,
   bo odmawia `UserService.deleteById`. `DELETE /patients/{id}` usuwa dziś pacjenta, a potem jego
-  konto (3e91771). Robi to serwis, a nie kaskada. Pacjent z wizytami dostaje 409.
+  konto (3e91771), chyba że na tym koncie jest też doktor, jak u pacjentki `KLM222333`: wtedy konto
+  zostaje przy doktorze. Robi to serwis, a nie kaskada. Pacjent z wizytami dostaje 409.
 - Wszystkie żądania z tabeli w sekcji 4 wymagają dziś tokenu JWT, poza `POST /patients`, które jest
   tylko dla niezalogowanych.
