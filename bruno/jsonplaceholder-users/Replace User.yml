@@ -1,0 +1,36 @@
+info:
+  name: Replace User
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/users/1"
+  body:
+    type: json
+    data: |-
+      {
+        "id": 1,
+        "name": "Leanne Graham",
+        "username": "Bret",
+        "email": "leanne.graham@example.com"
+      }
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.email
+      operator: eq
+      value: "leanne.graham@example.com"
+
+docs: |-
+  A full replacement: the answer is the sent body. Nothing is stored.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

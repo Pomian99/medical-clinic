@@ -1,16 +1,23 @@
 package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.PatientCreateCommand;
+import io.github.pomian99.medical_clinic.dto.PatientDto;
 import io.github.pomian99.medical_clinic.dto.PatientUpdateCommand;
+import io.github.pomian99.medical_clinic.exception.PatientAlreadyExistsException;
+import io.github.pomian99.medical_clinic.exception.PatientHasVisitsException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
 import io.github.pomian99.medical_clinic.exception.UserAlreadyExistsException;
 import io.github.pomian99.medical_clinic.mapper.PatientMapper;
 import io.github.pomian99.medical_clinic.model.Patient;
 import io.github.pomian99.medical_clinic.model.Role;
 import io.github.pomian99.medical_clinic.model.User;
+import io.github.pomian99.medical_clinic.repository.DoctorRepository;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.UserRepository;
+import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,78 +25,114 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PatientService {
     private final PatientRepository patientRepository;
     private final UserRepository userRepository;
+    private final VisitRepository visitRepository;
+    private final DoctorRepository doctorRepository;
     private final PatientMapper mapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
-    public List<Patient> findAll() {
-        return patientRepository.findAll();
+    public List<PatientDto> findAll() {
+        return mapper.toDto(patientRepository.findAll());
     }
 
     @Transactional(readOnly = true)
-    public Patient findById(long id) {
-        return patientRepository.findById(id)
-                .orElseThrow(() -> new PatientNotFoundException(id));
+    public PatientDto findById(long id) {
+        return mapper.toDto(getPatient(id));
     }
 
     @Transactional(readOnly = true)
-    public Patient findByEmail(String email) {
-        return patientRepository.findByUserEmail(email)
-                .orElseThrow(() -> new PatientNotFoundException(email));
+    public PatientDto findByEmail(String email) {
+        Patient patient = patientRepository.findByUserEmail(User.normalizeEmail(email))
+                .orElseThrow(PatientNotFoundException::new);
+        return mapper.toDto(patient);
     }
 
     @Transactional(readOnly = true)
-    public List<Patient> findByFragment(String fragment) {
-        return patientRepository.searchByFragment(fragment);
+    public List<PatientDto> findByFragment(String fragment) {
+        return mapper.toDto(patientRepository.searchByFragment(escapeLikeWildcards(fragment)));
     }
 
     // Two inserts (users, then patients) must succeed or fail together: without a
     // transaction a failed patient insert would leave an account nobody can register to.
     @Transactional
-    public Patient create(PatientCreateCommand command) {
+    public PatientDto create(PatientCreateCommand command) {
         // Business Validation: this rule requires checking other users,
         // so it cannot be handled by field-level validation annotations.
-        if (userRepository.existsByEmail(command.email())) {
-            throw new UserAlreadyExistsException(command.email());
+        if (userRepository.existsByEmail(User.normalizeEmail(command.email()))) {
+            throw new UserAlreadyExistsException();
+        }
+        if (patientRepository.existsByIdCardNo(command.idCardNo())) {
+            throw new PatientAlreadyExistsException();
         }
 
         User user = User.builder()
             .email(command.email())
-            .password(command.password())
+            .rawPassword(command.password())
+            .passwordEncoder(passwordEncoder)
             .role(Role.PATIENT)
             .build();
 
         Patient patient = mapper.toEntity(command);
         patient.setUser(user);
 
-        return patientRepository.save(patient);
+        Patient saved = patientRepository.save(patient);
+        log.info("Registered patient {}", saved.getId());
+        return mapper.toDto(saved);
     }
 
     @Transactional
-    public Patient update(long id, PatientUpdateCommand command) {
-        Patient patient = findById(id);
+    public PatientDto update(long id, PatientUpdateCommand command) {
+        Patient patient = getPatient(id);
+        User user = patient.getUser();
+        String email = User.normalizeEmail(command.email());
+        if (!user.getEmail().equals(email) && userRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException();
+        }
 
         mapper.update(patient, command);
-        return patient;
+        user.setEmail(email);
+        log.info("Updated patient {}", id);
+        return mapper.toDto(patient);
     }
 
     @Transactional
-    public Patient changePassword(long id, String password) {
-        return patientRepository.findById(id)
-                .map(patient -> {
-                    patient.updatePassword(password);
-                    return patient;
-                })
-                .orElseThrow(() -> new PatientNotFoundException(id));
+    public PatientDto changePassword(long id, String password) {
+        Patient patient = getPatient(id);
+        patient.changePassword(password, passwordEncoder);
+        log.info("Changed password of patient {}", id);
+        return mapper.toDto(patient);
     }
 
     @Transactional
     public void deleteById(long id) {
-        if (!patientRepository.existsById(id)) {
-            throw new PatientNotFoundException(id);
+        Patient patient = getPatient(id);
+        if (visitRepository.existsByPatientId(id)) {
+            throw new PatientHasVisitsException(id);
         }
-        patientRepository.deleteById(id);
+
+        User user = patient.getUser();
+        patientRepository.delete(patient);
+        if (doctorRepository.existsByUserId(user.getId())) {
+            log.info("Deleted patient {}, account {} stays with its doctor", id, user.getId());
+        } else {
+            userRepository.delete(user);
+            log.info("Deleted patient {} and account {}", id, user.getId());
+        }
+    }
+
+    private Patient getPatient(long id) {
+        return patientRepository.findById(id)
+                .orElseThrow(() -> new PatientNotFoundException(id));
+    }
+
+    private static String escapeLikeWildcards(String fragment) {
+        return fragment
+            .replace("!", "!!")
+            .replace("%", "!%")
+            .replace("_", "!_");
     }
 }

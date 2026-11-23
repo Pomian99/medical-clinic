@@ -18,7 +18,6 @@ http:
         "phoneNumber": "500",
         "birthday": "2044-05-12"
       }
-  auth: inherit
 
 runtime:
   assertions:

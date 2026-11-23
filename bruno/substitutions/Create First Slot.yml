@@ -14,12 +14,14 @@ http:
         "startsAt": "2030-02-11T10:00:00",
         "endsAt": "2030-02-11T10:30:00"
       }
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{adminToken}}"
 
 runtime:
   scripts:
     - type: after-response
-      code: bru.setVar("firstSlotId", res.body.id);
+      code: bru.setVar("firstSlotId", res.getBody().id);
   assertions:
     - expression: res.status
       operator: eq

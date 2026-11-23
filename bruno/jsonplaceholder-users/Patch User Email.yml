@@ -1,0 +1,36 @@
+info:
+  name: Patch User Email
+  type: http
+  seq: 6
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/users/1"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "leanne.graham@example.com"
+      }
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "200"
+    - expression: res.body.email
+      operator: eq
+      value: "leanne.graham@example.com"
+    - expression: res.body.username
+      operator: eq
+      value: "Bret"
+
+docs: |-
+  A partial change: the answer is the stored account with the new e-mail. Nothing is stored.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

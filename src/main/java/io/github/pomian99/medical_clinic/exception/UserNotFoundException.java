@@ -10,9 +10,9 @@ public class UserNotFoundException extends MedicalClinicException {
         );
     }
 
-    public UserNotFoundException(String email) {
+    public UserNotFoundException() {
         super(
-            String.format("User with email %s not found", email),
+            "User with this email not found",
             HttpStatus.NOT_FOUND
         );
     }

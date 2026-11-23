@@ -1,10 +1,13 @@
 package io.github.pomian99.medical_clinic.service;
 
 import io.github.pomian99.medical_clinic.dto.VisitCreateCommand;
+import io.github.pomian99.medical_clinic.dto.VisitDto;
 import io.github.pomian99.medical_clinic.exception.DoctorNotFoundException;
 import io.github.pomian99.medical_clinic.exception.InvalidSubstitutionException;
+import io.github.pomian99.medical_clinic.exception.InvalidSortPropertyException;
 import io.github.pomian99.medical_clinic.exception.InvalidVisitException;
 import io.github.pomian99.medical_clinic.exception.PatientNotFoundException;
+import io.github.pomian99.medical_clinic.exception.PatientVisitOverlapsException;
 import io.github.pomian99.medical_clinic.exception.VisitAlreadyBookedException;
 import io.github.pomian99.medical_clinic.exception.VisitNotFoundException;
 import io.github.pomian99.medical_clinic.exception.VisitOverlapsException;
@@ -16,18 +19,26 @@ import io.github.pomian99.medical_clinic.repository.DoctorRepository;
 import io.github.pomian99.medical_clinic.repository.PatientRepository;
 import io.github.pomian99.medical_clinic.repository.VisitRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class VisitService {
     private static final Duration SLOT = Duration.ofMinutes(15);
+    private static final List<String> SORTABLE_PROPERTIES = List.of("startsAt", "endsAt", "id");
 
     private final VisitRepository visitRepository;
     private final DoctorRepository doctorRepository;
@@ -36,12 +47,13 @@ public class VisitService {
     private final Clock clock;
 
     @Transactional
-    public Visit create(VisitCreateCommand command) {
+    public VisitDto create(VisitCreateCommand command) {
         validateSlot(command.startsAt(), command.endsAt());
 
         Doctor doctor = doctorRepository.findById(command.doctorId())
                 .orElseThrow(() -> new DoctorNotFoundException(command.doctorId()));
 
+        log.debug("Checking overlap for doctor {}: {} - {}", command.doctorId(), command.startsAt(), command.endsAt());
         if (visitRepository.existsByDoctorIdAndStartsAtBeforeAndEndsAtAfter(command.doctorId(), command.endsAt(), command.startsAt())) {
             throw new VisitOverlapsException(command.doctorId(), command.startsAt(), command.endsAt());
         }
@@ -50,11 +62,13 @@ public class VisitService {
         Visit visit = mapper.toEntity(command);
         visit.setDoctor(doctor);
 
-        return visitRepository.save(visit);
+        Visit saved = visitRepository.save(visit);
+        log.info("Created visit {} for doctor {}: {} - {}", saved.getId(), doctor.getId(), saved.getStartsAt(), saved.getEndsAt());
+        return mapper.toDto(saved);
     }
 
     @Transactional
-    public Visit book(long visitId, long patientId) {
+    public VisitDto book(long visitId, long patientId) {
         Visit visit = visitRepository.findById(visitId)
                 .orElseThrow(() -> new VisitNotFoundException(visitId));
         Patient patient = patientRepository.findById(patientId)
@@ -66,13 +80,17 @@ public class VisitService {
         if (!visit.isFree()) {
             throw new VisitAlreadyBookedException(visitId);
         }
+        if (visitRepository.existsByPatientIdAndStartsAtBeforeAndEndsAtAfter(patientId, visit.getEndsAt(), visit.getStartsAt())) {
+            throw new PatientVisitOverlapsException(patientId, visit.getStartsAt(), visit.getEndsAt());
+        }
 
         visit.setPatient(patient);
-        return visit;
+        log.info("Booked visit {} for patient {}", visitId, patientId);
+        return mapper.toDto(visit);
     }
 
     @Transactional
-    public List<Visit> substitute(long doctorId, long substituteId) {
+    public List<VisitDto> substitute(long doctorId, long substituteId) {
         if (doctorId == substituteId) {
             throw new InvalidSubstitutionException(doctorId);
         }
@@ -82,24 +100,43 @@ public class VisitService {
         Doctor substitute = doctorRepository.findById(substituteId)
                 .orElseThrow(() -> new DoctorNotFoundException(substituteId));
 
-        List<Visit> visits = visitRepository.findAllByDoctorIdOrderByStartsAt(doctorId);
+        List<Visit> visits = visitRepository.findAllByDoctorIdAndStartsAtGreaterThanEqualOrderByStartsAt(
+            doctorId, LocalDateTime.now(clock)
+        );
         for (Visit visit : visits) {
             if (visitRepository.existsByDoctorIdAndStartsAtBeforeAndEndsAtAfter(substituteId, visit.getEndsAt(), visit.getStartsAt())) {
                 throw new VisitOverlapsException(substituteId, visit.getStartsAt(), visit.getEndsAt());
             }
             visit.setDoctor(substitute);
         }
-        return visits;
+        log.info("Moved {} visits from doctor {} to doctor {}", visits.size(), doctorId, substituteId);
+        return mapper.toDto(visits);
     }
 
     @Transactional(readOnly = true)
-    public List<Visit> findAllByDoctorId(long id) {
-        return visitRepository.findAllByDoctorId(id);
+    public Page<VisitDto> findAll(Pageable pageable) {
+        validateSort(pageable.getSort());
+        return visitRepository.findAll(withIdAsLastSortKey(pageable)).map(mapper::toDto);
     }
 
     @Transactional(readOnly = true)
-    public List<Visit> findAllByPatientId(long id) {
-        return visitRepository.findAllByPatientId(id);
+    public List<VisitDto> findAllByDoctorId(long id) {
+        return mapper.toDto(visitRepository.findAllByDoctorIdOrderByStartsAt(id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<VisitDto> findAllByPatientId(long id) {
+        if (!patientRepository.existsById(id)) {
+            throw new PatientNotFoundException(id);
+        }
+        return mapper.toDto(visitRepository.findAllByPatientIdOrderByStartsAt(id));
+    }
+
+    @Transactional(readOnly = true)
+    public long countFreeSlots(Long doctorId, LocalDate day) {
+        long freeSlots = visitRepository.countFreeSlots(doctorId, day.atStartOfDay(), day.plusDays(1).atStartOfDay());
+        log.debug("Doctor {} has {} free slots on {}", doctorId, freeSlots, day);
+        return freeSlots;
     }
 
     private boolean isPast(LocalDateTime time) {
@@ -118,5 +155,21 @@ public class VisitService {
         if (length.isNegative() || length.isZero() || !wholeSlots) {
             throw new InvalidVisitException("Visit length must be a positive multiple of 15 minutes");
         }
+    }
+
+    private void validateSort(Sort sort) {
+        for (Sort.Order order : sort) {
+            if (!SORTABLE_PROPERTIES.contains(order.getProperty())) {
+                throw new InvalidSortPropertyException(order.getProperty(), SORTABLE_PROPERTIES);
+            }
+        }
+    }
+
+    private static Pageable withIdAsLastSortKey(Pageable pageable) {
+        Sort sort = pageable.getSort();
+        if (pageable.isUnpaged() || sort.getOrderFor("id") != null) {
+            return pageable;
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort.and(Sort.by("id")));
     }
 }

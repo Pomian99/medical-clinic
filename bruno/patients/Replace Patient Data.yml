@@ -10,6 +10,7 @@ http:
     type: json
     data: |-
       {
+        "email": "piotr.nowy@example.com",
         "firstName": "Piotr",
         "lastName": "Zieliński-Nowak",
         "phoneNumber": "600100201",
@@ -22,6 +23,9 @@ runtime:
     - expression: res.status
       operator: eq
       value: "200"
+    - expression: res.body.email
+      operator: eq
+      value: "piotr.nowy@example.com"
 
 settings:
   encodeUrl: true

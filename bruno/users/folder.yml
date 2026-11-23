@@ -1,7 +1,9 @@
 info:
   name: users
   type: folder
-  seq: 2
+  seq: 3
 
 request:
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{adminToken}}"

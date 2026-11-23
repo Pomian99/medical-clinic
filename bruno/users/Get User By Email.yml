@@ -6,13 +6,12 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/users?email=jan.wisniewski@example.com"
-  params:
-    - name: email
-      value: jan.wisniewski@example.com
-      type: query
   auth: inherit
 
 runtime:
+  scripts:
+    - type: after-response
+      code: bru.setVar("patientUserId", res.getBody().id);
   assertions:
     - expression: res.status
       operator: eq
@@ -20,15 +19,6 @@ runtime:
     - expression: res.body.role
       operator: eq
       value: PATIENT
-  actions:
-    - type: set-variable
-      phase: after-response
-      selector:
-        expression: res.body.id
-        method: jsonq
-      variable:
-        name: patientUserId
-        scope: runtime
 
 docs: |-
   Jan Wiśniewski is a patient from data.sql. His account id is saved for "Remove Patient User".

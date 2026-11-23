@@ -15,7 +15,9 @@ http:
         "lastName": "Mazur",
         "specialization": "DERMATOLOGIST"
       }
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{adminToken}}"
 
 runtime:
   assertions:

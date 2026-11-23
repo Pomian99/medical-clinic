@@ -13,13 +13,26 @@ runtime:
     - expression: res.status
       operator: eq
       value: "200"
-    - expression: res.body.patientId
+    - expression: res.body.visit.id
+      operator: eq
+      value: "{{slotId}}"
+    - expression: res.body.visit.patientId
       operator: eq
       value: "1"
+    - expression: res.body.patient.id
+      operator: eq
+      value: "1"
+    - expression: res.body.doctor.id
+      operator: eq
+      value: "1"
+    - expression: res.body.freeSlotsThatDay
+      operator: isNumber
 
 docs: |-
   Patient 1 is Anna Nowak from data.sql. She is the first patient inserted into an empty
   database, so her id is 1 however many times the application starts.
+  The response is a booking summary: the visit, the patient, the doctor and the number of
+  the doctor's free slots left that day.
 
 settings:
   encodeUrl: true

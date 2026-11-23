@@ -8,17 +8,18 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-@NoArgsConstructor
-@AllArgsConstructor
+import java.util.Locale;
+
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Setter
-@Builder
 @Entity
 @Table(name = "users")
 public class User {
@@ -29,6 +30,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Setter(AccessLevel.NONE)
     @Column(nullable = false)
     private String password;
 
@@ -37,7 +39,45 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    public void updatePassword(String password) {
-        this.password = password;
+    @Builder
+    private User(String email, String rawPassword, PasswordEncoder passwordEncoder, Role role) {
+        this.email = normalizeEmail(email);
+        this.password = encodePassword(rawPassword, passwordEncoder);
+        this.role = role;
+    }
+
+    public static String normalizeEmail(String email) {
+        return email == null ? null : email.toLowerCase(Locale.ROOT);
+    }
+
+    public void setEmail(String email) {
+        this.email = normalizeEmail(email);
+    }
+
+    public void changePassword(String rawPassword, PasswordEncoder passwordEncoder) {
+        this.password = encodePassword(rawPassword, passwordEncoder);
+    }
+
+    private static String encodePassword(String rawPassword, PasswordEncoder passwordEncoder) {
+        if (rawPassword == null || rawPassword.isBlank()) {
+            throw new IllegalArgumentException("Password cannot be blank");
+        }
+        return passwordEncoder.encode(rawPassword);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof User other)) {
+            return false;
+        }
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

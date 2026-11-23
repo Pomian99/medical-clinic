@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: "20"
+      author: kursant
+      changes:
+        - sql:
+            sql: ALTER TABLE users DROP CONSTRAINT users_role_check
+        - sql:
+            sql: >-
+              ALTER TABLE users ADD CONSTRAINT users_role_check
+              CHECK (role IN ('PATIENT', 'DOCTOR', 'ADMIN'))
+      rollback:
+        - sql:
+            sql: ALTER TABLE users DROP CONSTRAINT users_role_check
+        - sql:
+            sql: >-
+              ALTER TABLE users ADD CONSTRAINT users_role_check
+              CHECK (role IN ('PATIENT', 'DOCTOR'))
+  - changeSet:
+      id: "21"
+      author: kursant
+      # Demo admin account, password: admin. Only the BCrypt hash goes to the repository.
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: email
+                  value: admin
+              - column:
+                  name: password
+                  value: $2a$10$oq88cAMkjg0Bev1EJd1ycOtKghkEkAUcL/cvMPaxKk1mvEdXcAiUK
+              - column:
+                  name: role
+                  value: ADMIN
+      rollback:
+        - delete:
+            tableName: users
+            where: email = 'admin'

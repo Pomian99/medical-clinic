@@ -13,7 +13,9 @@ http:
         "name": "Przychodnia Centrum",
         "city": "Kraków"
       }
-  auth: inherit
+  auth:
+    type: bearer
+    token: "{{adminToken}}"
 
 runtime:
   assertions:

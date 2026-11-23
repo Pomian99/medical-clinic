@@ -4,8 +4,6 @@ import io.github.pomian99.medical_clinic.dto.DoctorCreateCommand;
 import io.github.pomian99.medical_clinic.dto.DoctorDto;
 import io.github.pomian99.medical_clinic.dto.SubstitutionCommand;
 import io.github.pomian99.medical_clinic.dto.VisitDto;
-import io.github.pomian99.medical_clinic.mapper.DoctorMapper;
-import io.github.pomian99.medical_clinic.mapper.VisitMapper;
 import io.github.pomian99.medical_clinic.service.DoctorService;
 import io.github.pomian99.medical_clinic.service.VisitService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,13 +34,11 @@ import java.util.List;
 public class DoctorController {
     private final DoctorService doctorService;
     private final VisitService visitService;
-    private final DoctorMapper mapper;
-    private final VisitMapper visitMapper;
 
     @Operation(summary = "List all doctors")
     @GetMapping
     public List<DoctorDto> getDoctors() {
-        return mapper.toDto(doctorService.findAll());
+        return doctorService.findAll();
     }
 
     @Operation(summary = "Find doctor with given id")
@@ -63,7 +59,7 @@ public class DoctorController {
     })
     @GetMapping("/{id}")
     public DoctorDto getDoctorById(@PathVariable long id) {
-        return mapper.toDto(doctorService.findById(id));
+        return doctorService.findById(id);
     }
 
     @Operation(
@@ -95,7 +91,7 @@ public class DoctorController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public DoctorDto createDoctor(@Valid @RequestBody DoctorCreateCommand command) {
-        return mapper.toDto(doctorService.create(command));
+        return doctorService.create(command);
     }
 
     @Operation(
@@ -119,7 +115,7 @@ public class DoctorController {
     })
     @PostMapping(path = "/{id}/facilities/{facilityId}")
     public DoctorDto addFacility(@PathVariable long id, @PathVariable long facilityId) {
-        return mapper.toDto(doctorService.addFacility(id, facilityId));
+        return doctorService.addFacility(id, facilityId);
     }
 
     @Operation(
@@ -144,13 +140,14 @@ public class DoctorController {
     })
     @DeleteMapping(path = "/{id}/facilities/{facilityId}")
     public DoctorDto removeFacility(@PathVariable long id, @PathVariable long facilityId) {
-        return mapper.toDto(doctorService.removeFacility(id, facilityId));
+        return doctorService.removeFacility(id, facilityId);
     }
 
     @Operation(
-            summary = "Move all visits of doctor to substitute",
-            description = "Visits move from the earliest one. If the substitute already has a visit "
-                    + "at the time of any of them, no visit is moved."
+            summary = "Move upcoming visits of doctor to substitute",
+            description = "Visits that have not started yet move, from the earliest one; past visits "
+                    + "stay with the doctor in the patients' history. If the substitute already has "
+                    + "a visit at the time of any of them, no visit is moved."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Visits moved, the moved visits are returned"),
@@ -176,7 +173,7 @@ public class DoctorController {
     })
     @PostMapping("/{id}/substitutions")
     public List<VisitDto> substitute(@PathVariable long id, @Valid @RequestBody SubstitutionCommand command) {
-        return visitMapper.toDto(visitService.substitute(id, command.substituteId()));
+        return visitService.substitute(id, command.substituteId());
     }
 
     @Operation(

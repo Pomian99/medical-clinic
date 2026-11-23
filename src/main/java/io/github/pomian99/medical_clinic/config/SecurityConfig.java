@@ -1,0 +1,46 @@
+package io.github.pomian99.medical_clinic.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@Import(JwtConfig.class)
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.POST, "/patients").anonymous()
+                .requestMatchers(HttpMethod.POST, "/auth/token").permitAll()
+                .requestMatchers(HttpMethod.GET, "/patients").hasRole("ADMIN")
+                .requestMatchers("/users/**").hasRole("ADMIN")
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/postman/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/visits").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/doctors", "/facilities").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/doctors").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/facilities/**").authenticated()
+                .requestMatchers("/doctors/*/facilities/*").hasRole("DOCTOR")
+                .requestMatchers("/patients/**", "/doctors/**", "/facilities/**", "/visits/**").hasRole("PATIENT")
+                .anyRequest().denyAll())
+            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
